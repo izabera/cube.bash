@@ -1,0 +1,111 @@
+#pragma once
+#include <algorithm>
+#include <numeric>
+#include <stdexcept>
+#include <string>
+#include <array>
+#include <cstdint>
+#include <span>
+#include <string_view>
+
+using u64 = uint64_t;
+using u32 = uint32_t;
+using u16 = uint16_t;
+using u8 = uint8_t;
+
+#if 0
+  speffz-ish         cp               co               ep               eo
+
+    AaB              0.1              0.0              .0.              .0.
+    d0b              ...              ...              3.1              0.0
+    DcC              3.2              0.0              .2.              .0.
+EeF IiJ MmN QqR  0.3 3.2 2.1 1.0  1.2 1.2 1.2 1.2  .3. .2. .1. .0.  .1. .1. .1. .1.
+h1f l2j p3n t4r  ... ... ... ...  ... ... ... ...  4.5 5.6 6.7 7.4  1.1 0.0 1.1 0.0
+HgG LkK PoO TsS  7.4 4.5 5.6 6.7  2.1 2.1 2.1 2.1  .b. .8. .9. .a.  .1. .1. .1. .1.
+    UuV              4.5              0.0              .8.              .0.
+    x5v              ...              ...              b.9              0.0
+    XwW              7.6              0.0              .a.              .0.
+#endif
+
+namespace rubik {
+struct cube {
+    std::array<u8, 8> co{}, cp{0,1,2,3,4,5,6,7};
+    std::array<u8, 12> eo{}, ep{0,1,2,3,4,5,6,7,8,9,10,11};
+
+    enum cubie { // this is basically type safe
+        ULB, UBL=ULB, LBU, LUB=LBU, BLU, BUL=BLU,
+        URB, UBR=URB, BRU, BUR=BRU, RBU, RUB=RBU,
+        URF, UFR=URF, RFU, RUF=RFU, FRU, FUR=FRU,
+        ULF, UFL=ULF, FLU, FUL=FLU, LFU, LUF=LFU,
+        DLF, DFL=DLF, LFD, LDF=LFD, FLD, FDL=FLD,
+        DRF, DFR=DRF, FRD, FDR=FRD, RFD, RDF=RFD,
+        DRB, DBR=DRB, RBD, RDB=RBD, BRD, BDR=BRD,
+        DLB, DBL=DLB, BLD, BDL=BLD, LBD, LDB=LBD,
+
+        UB, BU, UR, RU, UF, FU, UL, LU,
+        BL, LB, FL, LF, FR, RF, BR, RB,
+        DF, FD, DR, RD, DB, BD, DL, LD,
+    };
+
+    constexpr cube(std::span<cubie> cubies) {
+        auto ex = std::runtime_error("bad cubies?");
+        int corners = 0, edges = 0;
+        for (int c : cubies) {
+            if (c >= 48) // totally type safe, basically
+                throw std::runtime_error("wtf is this?");
+            else if (c < 24) {
+                if (corners >= 8)
+                    throw std::runtime_error("too many corners");
+                cp[corners] = c/3;
+                co[corners] = c%3;
+                corners++;
+            }
+            else { // type safety is the #1 priority
+                if (corners != 8 || edges >= 12)
+                    throw std::runtime_error("too many edges");
+                c -= 24;
+                ep[edges] = c/2;
+                eo[edges] = c%2;
+                edges++;
+            }
+        }
+        if (corners != 8 || edges != 12)
+            throw std::runtime_error("wrong number of corners or edges");
+
+        auto sumco = std::accumulate(co.begin(), co.end(), 0);
+        auto sumeo = std::accumulate(eo.begin(), eo.end(), 0);
+        if (sumco % 3 != 0 || sumeo % 2 != 0)
+            throw std::runtime_error("bad orient");
+        std::array<u8, 12> iota;
+        std::iota(iota.begin(), iota.end(), 0);
+        if (!std::is_permutation(cp.begin(), cp.end(), iota.begin())) {
+            printf("cp = %d %d %d %d %d %d %d %d\n",
+                    cp[0], cp[1], cp[2], cp[3],
+                    cp[4], cp[5], cp[6], cp[7]);
+            throw std::runtime_error("bad c perm");
+        }
+        if (!std::is_permutation(ep.begin(), ep.end(), iota.begin())) {
+            printf("ep = %d %d %d %d %d %d %d %d %d %d %d %d\n",
+                    ep[0], ep[1], ep[2], ep[3],
+                    ep[4], ep[5], ep[6], ep[7],
+                    ep[8], ep[9], ep[10], ep[11]);
+            throw std::runtime_error("bad e perm");
+        }
+        // todo: parity???
+    }
+
+    constexpr cube(std::string_view = "") {}
+    constexpr cube(const char *s) : cube(std::string_view(s)) {}
+    constexpr cube operator~() const { return *this; }
+    constexpr cube &operator+(const cube &) { return *this; }
+    constexpr const cube operator+(const cube &) const { return *this; }
+    constexpr bool operator==(const cube &) const;
+    constexpr std::string to_string() const;
+    constexpr static cube random_scramble();
+
+    void debug() const;
+};
+
+static inline constexpr auto operator""_cube(const char *s, size_t) { return cube{s}; }
+
+};
