@@ -47,8 +47,7 @@ struct cube {
         DF, FD, DR, RD, DB, BD, DL, LD,
     };
 
-    constexpr cube(std::span<cubie> cubies) {
-        auto ex = std::runtime_error("bad cubies?");
+    constexpr cube(std::span<const cubie> cubies) {
         int corners = 0, edges = 0;
         for (int c : cubies) {
             if (c >= 48) // totally type safe, basically
@@ -70,7 +69,7 @@ struct cube {
             }
         }
         if (corners != 8 || edges != 12)
-            throw std::runtime_error("wrong number of corners or edges");
+            throw std::runtime_error("not enough corners or edges");
 
         auto sumco = std::accumulate(co.begin(), co.end(), 0);
         auto sumeo = std::accumulate(eo.begin(), eo.end(), 0);
@@ -79,17 +78,17 @@ struct cube {
         std::array<u8, 12> iota;
         std::iota(iota.begin(), iota.end(), 0);
         if (!std::is_permutation(cp.begin(), cp.end(), iota.begin())) {
-            printf("cp = %d %d %d %d %d %d %d %d\n",
-                    cp[0], cp[1], cp[2], cp[3],
-                    cp[4], cp[5], cp[6], cp[7]);
-            throw std::runtime_error("bad c perm");
+            //printf("cp = %d %d %d %d %d %d %d %d\n",
+            //        cp[0], cp[1], cp[2], cp[3],
+            //        cp[4], cp[5], cp[6], cp[7]);
+            throw std::runtime_error("bad corner perm");
         }
         if (!std::is_permutation(ep.begin(), ep.end(), iota.begin())) {
-            printf("ep = %d %d %d %d %d %d %d %d %d %d %d %d\n",
-                    ep[0], ep[1], ep[2], ep[3],
-                    ep[4], ep[5], ep[6], ep[7],
-                    ep[8], ep[9], ep[10], ep[11]);
-            throw std::runtime_error("bad e perm");
+            //printf("ep = %d %d %d %d %d %d %d %d %d %d %d %d\n",
+            //        ep[0], ep[1], ep[2], ep[3],
+            //        ep[4], ep[5], ep[6], ep[7],
+            //        ep[8], ep[9], ep[10], ep[11]);
+            throw std::runtime_error("bad edge perm");
         }
         // todo: parity???
     }

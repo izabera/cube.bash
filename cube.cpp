@@ -74,27 +74,38 @@ void cube::debug() const {
 }
 
 int main() {
-    auto c = cube();
-    c.debug();
-    puts("==");
-    c.cp = {1,2,3,0,4,5,6,7};
-    c.ep = {1,2,3,0,4,5,6,7,8,9,10,11};
-    c.debug();
-    puts("==");
-    c.cp = {2,3,0,1,5,6,7,4};
-    c.ep = {2,3,0,1,4,5,6,7,9,10,11,8};
-    c.debug();
-    cube("R U R' U'") + "L2 d2";
-    // Cube<4>::random_scramble().to_string();
-    [[maybe_unused]] constexpr auto x = ~"R"_cube;
+    //auto c = cube();
+    //c.debug();
+    //puts("==");
+    //c.cp = {1,2,3,0,4,5,6,7};
+    //c.ep = {1,2,3,0,4,5,6,7,8,9,10,11};
+    //c.debug();
+    //puts("==");
+    //c.cp = {2,3,0,1,5,6,7,4};
+    //c.ep = {2,3,0,1,4,5,6,7,9,10,11,8};
+    //c.debug();
+    //cube("R U R' U'") + "L2 d2";
+    //// Cube<4>::random_scramble().to_string();
+    //[[maybe_unused]] constexpr auto x = ~"R"_cube;
 
     using enum cube::cubie;
-    auto cubies = std::array{
-        ULB, URB, URF, UFL,
-        DLF, DRF, DRB, DBL,
+    puts("solved");
+    constexpr auto solved = cube(std::array{
+        ULB, URB, URF, ULF,
+        DLF, DRF, DRB, DLB,
         UB, UR, UF, UL,
         BL, FL, FR, BR,
         DF, DR, DB, DL,
-    };
-    cube(cubies).debug();
+    });
+    solved.debug();
+
+    puts("U");
+    constexpr auto U = cube(std::array{
+        UFL, UBL, UBR, UFR,
+        DLF, DRF, DRB, DLB,
+        UL, UB, UR, UF,
+        BL, FL, FR, BR,
+        DF, DR, DB, DL,
+    });
+    U.debug();
 }
