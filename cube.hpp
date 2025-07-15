@@ -90,7 +90,29 @@ struct cube {
             //        ep[8], ep[9], ep[10], ep[11]);
             throw std::runtime_error("bad edge perm");
         }
-        // todo: parity???
+
+        auto parity = [](const auto& perm, int n) {
+            bool visited[12]{};
+            int swaps = 0;
+
+            for (int i = 0; i < n; i++) {
+                if (!visited[i]) {
+                    int len = 0, curr = i;
+
+                    while (!visited[curr]) {
+                        visited[curr] = true;
+                        curr = perm[curr];
+                        len++;
+                    }
+
+                    swaps += len - 1; // each k cycle adds k-1 swaps
+                }
+            }
+
+            return swaps % 2;
+        };
+        if (parity(ep, 12) != parity(cp, 8))
+            throw std::runtime_error("incorrect parity");
     }
 
     constexpr cube(std::string_view = "") {}
