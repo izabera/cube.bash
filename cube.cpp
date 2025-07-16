@@ -88,24 +88,24 @@ int main() {
     //// Cube<4>::random_scramble().to_string();
     //[[maybe_unused]] constexpr auto x = ~"R"_cube;
 
-    using enum cube::cubie;
     puts("solved");
-    constexpr auto solved = cube(std::array{
-        ULB, URB, URF, ULF,
-        DLF, DRF, DRB, DLB,
-        UB, UR, UF, UL,
-        BL, FL, FR, BR,
-        DF, DR, DB, DL,
-    });
-    solved.debug();
+    SOLVED.debug();
 
     puts("U");
-    constexpr auto U = cube(std::array{
-        UFL, UBL, UBR, UFR,
-        DLF, DRF, DRB, DLB,
-        UL, UB, UR, UF,
-        BL, FL, FR, BR,
-        DF, DR, DB, DL,
-    });
     U.debug();
+
+    puts("D");
+    D.debug();
+
+    puts("R");
+    R.debug();
+
+    puts("L");
+    L.debug();
+
+    puts("F");
+    F.debug();
+
+    puts("B");
+    B.debug();
 }

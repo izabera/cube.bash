@@ -27,24 +27,24 @@ HgG LkK PoO TsS  7.4 4.5 5.6 6.7  2.1 2.1 2.1 2.1  .b. .8. .9. .a.  .1. .1. .1. 
 #endif
 
 namespace rubik {
+enum cubie { // this is basically type safe
+    ULB, UBL=ULB, LBU, LUB=LBU, BLU, BUL=BLU,
+    URB, UBR=URB, BRU, BUR=BRU, RBU, RUB=RBU,
+    URF, UFR=URF, RFU, RUF=RFU, FRU, FUR=FRU,
+    ULF, UFL=ULF, FLU, FUL=FLU, LFU, LUF=LFU,
+    DLF, DFL=DLF, LFD, LDF=LFD, FLD, FDL=FLD,
+    DRF, DFR=DRF, FRD, FDR=FRD, RFD, RDF=RFD,
+    DRB, DBR=DRB, RBD, RDB=RBD, BRD, BDR=BRD,
+    DLB, DBL=DLB, BLD, BDL=BLD, LBD, LDB=LBD,
+
+    UB, BU, UR, RU, UF, FU, UL, LU,
+    BL, LB, FL, LF, FR, RF, BR, RB,
+    DF, FD, DR, RD, DB, BD, DL, LD,
+};
+
 struct cube {
     std::array<u8, 8> co{}, cp{0,1,2,3,4,5,6,7};
     std::array<u8, 12> eo{}, ep{0,1,2,3,4,5,6,7,8,9,10,11};
-
-    enum cubie { // this is basically type safe
-        ULB, UBL=ULB, LBU, LUB=LBU, BLU, BUL=BLU,
-        URB, UBR=URB, BRU, BUR=BRU, RBU, RUB=RBU,
-        URF, UFR=URF, RFU, RUF=RFU, FRU, FUR=FRU,
-        ULF, UFL=ULF, FLU, FUL=FLU, LFU, LUF=LFU,
-        DLF, DFL=DLF, LFD, LDF=LFD, FLD, FDL=FLD,
-        DRF, DFR=DRF, FRD, FDR=FRD, RFD, RDF=RFD,
-        DRB, DBR=DRB, RBD, RDB=RBD, BRD, BDR=BRD,
-        DLB, DBL=DLB, BLD, BDL=BLD, LBD, LDB=LBD,
-
-        UB, BU, UR, RU, UF, FU, UL, LU,
-        BL, LB, FL, LF, FR, RF, BR, RB,
-        DF, FD, DR, RD, DB, BD, DL, LD,
-    };
 
     constexpr cube(std::span<const cubie> cubies) {
         int corners = 0, edges = 0;
@@ -116,4 +116,54 @@ struct cube {
 
 static inline constexpr auto operator""_cube(const char *s, size_t) { return cube{s}; }
 
+
+constexpr auto SOLVED = cube(std::array{
+    ULB, URB, URF, ULF,
+    DLF, DRF, DRB, DLB,
+    UB, UR, UF, UL,
+    BL, FL, FR, BR,
+    DF, DR, DB, DL,
+});
+constexpr auto U = cube(std::array{
+    UFL, UBL, UBR, UFR,
+    DLF, DRF, DRB, DLB,
+    UL, UB, UR, UF,
+    BL, FL, FR, BR,
+    DF, DR, DB, DL,
+});
+constexpr auto D = cube(std::array{
+    ULB, URB, URF, ULF,
+    DLB, DLF, DRF, DRB,
+    UB, UR, UF, UL,
+    BL, FL, FR, BR,
+    DL, DF, DR, DB,
+});
+constexpr auto R = cube(std::array{
+    ULB, FRU, FRD, ULF,
+    DLF, BRD, BRU, DLB,
+    UB, FR, UF, UL,
+    BL, FL, DR, UR,
+    DF, BR, DB, DL,
+});
+constexpr auto L = cube(std::array{
+    FLU, URB, URF, FLD,
+    BLD, DRF, DRB, BLU,
+    UB, UR, UF, FL,
+    UL, DL, FR, BR,
+    DF, DR, DB, BL,
+});
+constexpr auto F = cube(std::array{
+    ULB, URB, LFU, LFD,
+    RFD, RFU, DRB, DLB,
+    UB, UR, LF, UL,
+    BL, FD, FU, BR,
+    RF, DR, DB, DL,
+});
+constexpr auto B = cube(std::array{
+    RBU, RBD, URF, ULF,
+    DLF, DRF, LDB, LBU,
+    RB, UR, UF, UL,
+    BU, FL, FR, BD,
+    DF, DR, LB, DL,
+});
 };
