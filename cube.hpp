@@ -38,10 +38,11 @@ enum cubie { // this is basically type safe
 };
 // clang-format on
 
-struct cube {
+class cube {
     std::array<unsigned char, 8> co{}, cp{0, 1, 2, 3, 4, 5, 6, 7};
     std::array<unsigned char, 12> eo{}, ep{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
+  public:
     constexpr cube(std::span<const cubie> cubies) {
         int corners = 0, edges = 0;
         int cmask = 0, emask = 0;

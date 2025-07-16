@@ -78,6 +78,8 @@ void rubik::cube::debug(std::string_view message) const {
     // clang-format on
 }
 
+#include <iostream>
+
 int main() {
     using namespace rubik;
     //auto c = cube();
@@ -172,4 +174,21 @@ int main() {
     static_assert(cube("U2 D2 R2 L2 F2 B2")*2 == SOLVED);
     cube("U2 D2 R2 L2 F2 B2").debug("checkerboard");
     static_assert(tperm * 0 == SOLVED);
+
+    std::string scramble;
+    while (1) {
+        std::cerr << "> ";
+        if (!(std::getline(std::cin, scramble))) {
+            std::cerr << '\n';
+            break;
+        }
+        try {
+            auto perm = cube(scramble);
+            perm.debug(scramble);
+            auto times = times_until_solved(perm);
+            std::cout << scramble << " takes " << times << " repetitions" << std::endl;
+        } catch (std::exception& e) {
+            std::cout << e.what() << std::endl;
+        }
+    }
 }

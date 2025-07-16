@@ -1,5 +1,6 @@
-LDFLAGS = -fsanitize=address
-CXXFLAGS = -std=c++23 -Wall -Wextra -fsanitize=address -ggdb3 -MMD
+#LDFLAGS = -fsanitize=address
+#CXXFLAGS = -std=c++23 -Wall -Wextra -fsanitize=address -ggdb3 -MMD
+CXXFLAGS = -std=c++23 -Wall -Wextra -O3 -ggdb3 -MMD
 LINK.o = $(CXX) $(LDFLAGS) $(TARGET_ARCH)
 cube: cube.o
 
