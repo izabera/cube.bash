@@ -3,14 +3,8 @@
 #include <stdexcept>
 #include <string>
 #include <array>
-#include <cstdint>
 #include <span>
 #include <string_view>
-
-using u64 = uint64_t;
-using u32 = uint32_t;
-using u16 = uint16_t;
-using u8 = uint8_t;
 
 #if 0
   speffz-ish         cp               co               ep               eo
@@ -43,8 +37,8 @@ enum cubie { // this is basically type safe
 };
 
 struct cube {
-    std::array<u8, 8> co{}, cp{0,1,2,3,4,5,6,7};
-    std::array<u8, 12> eo{}, ep{0,1,2,3,4,5,6,7,8,9,10,11};
+    std::array<unsigned char, 8> co{}, cp{0,1,2,3,4,5,6,7};
+    std::array<unsigned char, 12> eo{}, ep{0,1,2,3,4,5,6,7,8,9,10,11};
 
     constexpr cube(std::span<const cubie> cubies) {
         int corners = 0, edges = 0;
@@ -118,7 +112,7 @@ struct cube {
 static inline constexpr auto operator""_cube(const char *s, size_t) { return cube{s}; }
 
 
-constexpr cube SOLVED {
+constexpr static cube SOLVED {
     ULB, URB, URF, ULF,
     DLF, DRF, DRB, DLB,
     UB, UR, UF, UL,

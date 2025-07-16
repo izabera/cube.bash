@@ -1,8 +1,6 @@
 #include "cube.hpp"
-#include <fmt/format.h>
 
-using namespace rubik;
-void cube::debug() const {
+void rubik::cube::debug() const {
     constexpr static const char *col[] = {
         "\x1b[48;5;231m  \x1b[m\x1b[31m", // white
         "\x1b[48;5;202m  \x1b[m\x1b[31m", // orange
@@ -74,6 +72,7 @@ void cube::debug() const {
 }
 
 int main() {
+    using namespace rubik;
     //auto c = cube();
     //c.debug();
     //puts("==");
