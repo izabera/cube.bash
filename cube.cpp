@@ -125,10 +125,13 @@ int main() {
     x = ~R;
     x.debug("R'");
 
+    constexpr auto fruruf = F + R + U + ~R + ~U + ~F;
+    constexpr auto fururf = F + U + R + ~U + ~R + ~F;
+    static_assert(fruruf == ~fururf);
+    static_assert(fruruf == fururf*-7);
     constexpr auto sexy = R + U + ~R + ~U;
     constexpr auto rurf = R + U + ~R + ~F;
     constexpr auto sledge = ~R + F + R + ~F;
-    //constexpr auto fruruf = F + R + U + ~R + ~U + ~F;
     constexpr auto fisholl = F + R + ~U + ~R + ~U + rurf;
     constexpr auto toll = sexy + sledge;
     fisholl.debug("fisholl");
@@ -141,6 +144,28 @@ int main() {
     x.debug("solved");
     static_assert(tperm*2 == SOLVED);
     static_assert(tperm*-2 == SOLVED);
-    (L + ~D).debug("D'");
-    (L + ~D + L).debug("aperm");
+    (L + ~D + L + U*2 + ~L + D + L + U*2 + L*2).debug("aperm");
+    static_assert(SOLVED == ~SOLVED);
+
+    auto times_until_solved = [](const auto& perm) {
+        if (perm == SOLVED)
+            return 0;
+
+        auto state = SOLVED;
+        int times = 0;
+        do {
+            times++;
+            state += perm;
+        } while (state != SOLVED);
+        return times;
+    };
+
+    static_assert(SOLVED == ~SOLVED);
+    static_assert(times_until_solved(SOLVED) == 0);
+    static_assert(times_until_solved(R) == 4);
+    static_assert(times_until_solved(R*2) == 2);
+    static_assert(times_until_solved(R + U + ~R + ~U) == 6);
+    static_assert(times_until_solved(R + U) == 105);
+    static_assert(times_until_solved(R + ~U) == 63);
+    static_assert((R + U) * 105 == SOLVED);
 }
