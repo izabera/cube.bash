@@ -105,10 +105,16 @@ struct cube {
     constexpr cube &operator+=(const cube &other) {
         auto oldcp = cp;
         auto oldep = ep;
-        for (auto i = 0; i < 12; i++)
+        auto oldco = co;
+        auto oldeo = eo;
+        for (auto i = 0; i < 12; i++) {
             ep[i] = oldep[other.ep[i]];
-        for (auto i = 0; i < 8; i++)
+            eo[i] = (oldeo[other.ep[i]] + other.eo[i]) % 2;
+        }
+        for (auto i = 0; i < 8; i++) {
             cp[i] = oldcp[other.cp[i]];
+            co[i] = (oldco[other.cp[i]] + other.co[i]) % 3;
+        }
         return *this;
     }
     constexpr cube operator+(const cube &other) const {

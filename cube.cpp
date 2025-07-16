@@ -115,4 +115,10 @@ int main() {
     x += R;   x.debug("U2 R"   );
     x += R;   x.debug("U2 R2"  );
     x += U;   x.debug("U2 R2 U");
+    x = {};   x.debug("solved" );
+    x = (R + U) * 3;
+    x.debug("(RU)3");
+    x = {};   x.debug("solved" );
+    x = (F + U) * 3;
+    x.debug("(FU)3");
 }
