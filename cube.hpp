@@ -102,8 +102,35 @@ struct cube {
     constexpr cube(std::string_view = "");
     constexpr cube(const char *s) : cube(std::string_view(s)) {}
     constexpr cube operator~() const { return *this; }
-    constexpr cube &operator+=(const cube &) { return *this; }
-    constexpr const cube operator+(const cube &) const { return *this; }
+    constexpr cube &operator+=(const cube &other) {
+        auto oldcp = cp;
+        auto oldep = ep;
+        for (auto i = 0; i < 12; i++)
+            ep[i] = oldep[other.ep[i]];
+        for (auto i = 0; i < 8; i++)
+            cp[i] = oldcp[other.cp[i]];
+        return *this;
+    }
+    constexpr cube operator+(const cube &other) const {
+        auto tmp = *this;
+        tmp += other;
+        return tmp;
+    }
+    constexpr cube operator*(int n) const {
+        auto tmp = *this;
+        tmp *= n;
+        return tmp;
+    }
+    constexpr cube& operator*=(int n) {
+        if (n < 0) {
+            *this = ~*this;
+            n *= -1;
+        }
+        auto state = *this;
+        for (auto i = 0; i < n-1; i++) // n-1!!!
+            *this += state;
+        return *this;
+    }
     constexpr bool operator==(const cube &other) const {
         return cp == other.cp && co == other.co
             && ep == other.ep && eo == other.eo;
@@ -111,7 +138,7 @@ struct cube {
     constexpr std::string to_string() const;
     constexpr static cube random_scramble();
 
-    void debug() const;
+    void debug(std::string_view = "") const;
 };
 
 static inline constexpr auto operator""_cube(const char *s, size_t) { return cube{s}; }

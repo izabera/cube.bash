@@ -1,6 +1,11 @@
 #include "cube.hpp"
 
-void rubik::cube::debug() const {
+void rubik::cube::debug(std::string_view message) const {
+    if (message != "") {
+        auto msg = std::string(message);
+        puts(msg.data());
+    }
+
     // clang-format off
     constexpr static const char *col[] = {
         "\x1b[48;5;231m  \x1b[m\x1b[31m", // white
@@ -89,24 +94,25 @@ int main() {
     //// Cube<4>::random_scramble().to_string();
     //[[maybe_unused]] constexpr auto x = ~"R"_cube;
 
-    puts("solved");
-    SOLVED.debug();
+    SOLVED.debug("solved");
+    U.debug("U");
+    D.debug("D");
+    R.debug("R");
+    L.debug("L");
+    F.debug("F");
+    B.debug("B");
 
-    puts("U");
-    U.debug();
-
-    puts("D");
-    D.debug();
-
-    puts("R");
-    R.debug();
-
-    puts("L");
-    L.debug();
-
-    puts("F");
-    F.debug();
-
-    puts("B");
-    B.debug();
+    cube x;   x.debug("solved" );
+    x += U;   x.debug("U"      );
+    x += D;   x.debug("U D"    );
+    x += U;   x.debug("U2 D"   );
+    x += U;   x.debug("U' D"   );
+    x += D;   x.debug("U' D2"  );
+    x += D;   x.debug("U' D'"  );
+    x += U;   x.debug("D'"     );
+    x += D;   x.debug("solved" );
+    x += U*2; x.debug("U2"     );
+    x += R;   x.debug("U2 R"   );
+    x += R;   x.debug("U2 R2"  );
+    x += U;   x.debug("U2 R2 U");
 }
