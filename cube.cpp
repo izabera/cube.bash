@@ -168,4 +168,8 @@ int main() {
     static_assert(times_until_solved(R + U) == 105);
     static_assert(times_until_solved(R + ~U) == 63);
     static_assert((R + U) * 105 == SOLVED);
+    static_assert(cube("R U") == R + U);
+    static_assert(cube("U2 D2 R2 L2 F2 B2")*2 == SOLVED);
+    cube("U2 D2 R2 L2 F2 B2").debug("checkerboard");
+    static_assert(tperm * 0 == SOLVED);
 }

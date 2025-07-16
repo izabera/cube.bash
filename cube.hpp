@@ -139,6 +139,8 @@ struct cube {
         return tmp;
     }
     constexpr cube& operator*=(int n) {
+        if (n == 0)
+            *this = {};
         if (n < 0) {
             *this = ~*this;
             n *= -1;
