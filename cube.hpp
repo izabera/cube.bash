@@ -186,11 +186,11 @@ constexpr static cube SOLVED {
     BL, FL, DR, UR,
     DF, BR, DB, DL,
 }, L {
-    FLU, URB, URF, FLD,
-    BLD, DRF, DRB, BLU,
-    UB, UR, UF, FL,
-    UL, DL, FR, BR,
-    DF, DR, DB, BL,
+    BLD, URB, URF, BLU,
+    FLU, DRF, DRB, FLD,
+    UB, UR, UF, BL,
+    DL, UL, FR, BR,
+    DF, DR, DB, FL,
 }, F {
     ULB, URB, LFU, LFD,
     RFD, RFU, DRB, DLB,
