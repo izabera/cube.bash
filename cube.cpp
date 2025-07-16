@@ -121,4 +121,7 @@ int main() {
     x = {};   x.debug("solved" );
     x = (F + U) * 3;
     x.debug("(FU)3");
+    x = {};   x.debug("solved" );
+    x = ~R;
+    x.debug("R'");
 }

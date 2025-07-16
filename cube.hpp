@@ -101,7 +101,18 @@ struct cube {
 
     constexpr cube(std::string_view = "");
     constexpr cube(const char *s) : cube(std::string_view(s)) {}
-    constexpr cube operator~() const { return *this; }
+    constexpr cube operator~() const {
+        cube inverse;
+        for (auto i = 0; i < 8; i++)
+            inverse.cp[cp[i]] = i;
+        for (auto i = 0; i < 12; i++)
+            inverse.ep[ep[i]] = i;
+        for (auto i = 0; i < 8; i++)
+            inverse.co[i] = (3 - co[inverse.cp[i]]) % 3;
+        for (auto i = 0; i < 12; i++)
+            inverse.eo[i] = (2 - eo[inverse.ep[i]]) % 2;
+        return inverse;
+    }
     constexpr cube &operator+=(const cube &other) {
         auto oldcp = cp;
         auto oldep = ep;
