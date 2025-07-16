@@ -1,5 +1,4 @@
 #pragma once
-#include <algorithm>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -49,6 +48,7 @@ struct cube {
 
     constexpr cube(std::span<const cubie> cubies) {
         int corners = 0, edges = 0;
+        int cmask = 0, emask = 0;
         for (int c : cubies) {
             if (c >= 48) // totally type safe, basically
                 throw std::runtime_error("wtf is this?");
@@ -58,6 +58,7 @@ struct cube {
                 cp[corners] = c/3;
                 co[corners] = c%3;
                 corners++;
+                cmask |= 1 << (c/3);
             }
             else { // type safety is the #1 priority
                 if (corners != 8 || edges >= 12)
@@ -66,30 +67,16 @@ struct cube {
                 ep[edges] = c/2;
                 eo[edges] = c%2;
                 edges++;
+                emask |= 1 << (c/2);
             }
         }
-        if (corners != 8 || edges != 12)
-            throw std::runtime_error("not enough corners or edges");
+        if (cmask != 0xff || emask != 0xfff)
+            throw std::runtime_error("missing pieces");
 
         auto sumco = std::accumulate(co.begin(), co.end(), 0);
         auto sumeo = std::accumulate(eo.begin(), eo.end(), 0);
         if (sumco % 3 != 0 || sumeo % 2 != 0)
             throw std::runtime_error("bad orient");
-        std::array<u8, 12> iota;
-        std::iota(iota.begin(), iota.end(), 0);
-        if (!std::is_permutation(cp.begin(), cp.end(), iota.begin())) {
-            //printf("cp = %d %d %d %d %d %d %d %d\n",
-            //        cp[0], cp[1], cp[2], cp[3],
-            //        cp[4], cp[5], cp[6], cp[7]);
-            throw std::runtime_error("bad corner perm");
-        }
-        if (!std::is_permutation(ep.begin(), ep.end(), iota.begin())) {
-            //printf("ep = %d %d %d %d %d %d %d %d %d %d %d %d\n",
-            //        ep[0], ep[1], ep[2], ep[3],
-            //        ep[4], ep[5], ep[6], ep[7],
-            //        ep[8], ep[9], ep[10], ep[11]);
-            throw std::runtime_error("bad edge perm");
-        }
 
         auto parity = [](const auto& perm, int n) {
             bool visited[12]{};
