@@ -101,6 +101,7 @@ struct cube {
         if (parity(ep, 12) != parity(cp, 8))
             throw std::runtime_error("incorrect parity");
     }
+    constexpr cube(std::initializer_list<cubie> cubies) : cube(std::span(cubies)) { }
 
     constexpr cube(std::string_view = "") {}
     constexpr cube(const char *s) : cube(std::string_view(s)) {}
@@ -117,53 +118,48 @@ struct cube {
 static inline constexpr auto operator""_cube(const char *s, size_t) { return cube{s}; }
 
 
-constexpr auto SOLVED = cube(std::array{
+constexpr cube SOLVED {
     ULB, URB, URF, ULF,
     DLF, DRF, DRB, DLB,
     UB, UR, UF, UL,
     BL, FL, FR, BR,
     DF, DR, DB, DL,
-});
-constexpr auto U = cube(std::array{
+}, U {
     UFL, UBL, UBR, UFR,
     DLF, DRF, DRB, DLB,
     UL, UB, UR, UF,
     BL, FL, FR, BR,
     DF, DR, DB, DL,
-});
-constexpr auto D = cube(std::array{
+}, D {
     ULB, URB, URF, ULF,
     DLB, DLF, DRF, DRB,
     UB, UR, UF, UL,
     BL, FL, FR, BR,
     DL, DF, DR, DB,
-});
-constexpr auto R = cube(std::array{
+}, R {
     ULB, FRU, FRD, ULF,
     DLF, BRD, BRU, DLB,
     UB, FR, UF, UL,
     BL, FL, DR, UR,
     DF, BR, DB, DL,
-});
-constexpr auto L = cube(std::array{
+}, L {
     FLU, URB, URF, FLD,
     BLD, DRF, DRB, BLU,
     UB, UR, UF, FL,
     UL, DL, FR, BR,
     DF, DR, DB, BL,
-});
-constexpr auto F = cube(std::array{
+}, F {
     ULB, URB, LFU, LFD,
     RFD, RFU, DRB, DLB,
     UB, UR, LF, UL,
     BL, FD, FU, BR,
     RF, DR, DB, DL,
-});
-constexpr auto B = cube(std::array{
+}, B {
     RBU, RBD, URF, ULF,
     DLF, DRF, LDB, LBU,
     RB, UR, UF, UL,
     BU, FL, FR, BD,
     DF, DR, LB, DL,
-});
 };
+
+}
