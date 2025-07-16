@@ -124,4 +124,23 @@ int main() {
     x = {};   x.debug("solved" );
     x = ~R;
     x.debug("R'");
+
+    constexpr auto sexy = R + U + ~R + ~U;
+    constexpr auto rurf = R + U + ~R + ~F;
+    constexpr auto sledge = ~R + F + R + ~F;
+    //constexpr auto fruruf = F + R + U + ~R + ~U + ~F;
+    constexpr auto fisholl = F + R + ~U + ~R + ~U + rurf;
+    constexpr auto toll = sexy + sledge;
+    fisholl.debug("fisholl");
+    toll.debug("toll");
+    constexpr auto yperm = fisholl + toll;
+    yperm.debug("yperm");
+    constexpr auto tperm = R + U + ~R + ~U + ~R + F + R*2 + ~U + ~R + ~U + R + U + ~R + ~F;
+    tperm.debug("tperm");
+    x = tperm*2;
+    x.debug("solved");
+    static_assert(tperm*2 == SOLVED);
+    static_assert(tperm*-2 == SOLVED);
+    (L + ~D).debug("D'");
+    (L + ~D + L).debug("aperm");
 }
