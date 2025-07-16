@@ -97,12 +97,15 @@ struct cube {
     }
     constexpr cube(std::initializer_list<cubie> cubies) : cube(std::span(cubies)) { }
 
-    constexpr cube(std::string_view = "") {}
+    constexpr cube(std::string_view = "");
     constexpr cube(const char *s) : cube(std::string_view(s)) {}
     constexpr cube operator~() const { return *this; }
     constexpr cube &operator+(const cube &) { return *this; }
     constexpr const cube operator+(const cube &) const { return *this; }
-    constexpr bool operator==(const cube &) const;
+    constexpr bool operator==(const cube &other) const {
+        return cp == other.cp && co == other.co
+            && ep == other.ep && eo == other.eo;
+    }
     constexpr std::string to_string() const;
     constexpr static cube random_scramble();
 
@@ -156,4 +159,29 @@ constexpr static cube SOLVED {
     DF, DR, LB, DL,
 };
 
+constexpr inline cube::cube(std::string_view scramble) {
+    for (size_t i = 0; i < scramble.size(); i++) {
+        while (scramble[i] == ' ') i++;
+
+        auto state = &SOLVED;
+        int count = 1;
+        switch (scramble[i]) {
+            default: throw std::runtime_error("bad scramble");
+            case 'U': state = &U; break;
+            case 'D': state = &D; break;
+            case 'R': state = &R; break;
+            case 'L': state = &L; break;
+            case 'F': state = &F; break;
+            case 'B': state = &B; break;
+        }
+        if (i < scramble.size()-1) {
+            switch (scramble[i+1]) {
+                case '2': count = 2; i++; break;
+                case '\'': count = 3; i++; break;
+            }
+        }
+        for (auto c = 0; c < count; c++)
+            *this = *this + *state;
+    }
+}
 }
