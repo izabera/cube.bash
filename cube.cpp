@@ -64,7 +64,7 @@ void cube::debug() const {
            "      %s%s%s\x1b[m\n",
                      L("AaB"),
                      L("d0b"),
-                     L("Dcc"),
+                     L("DcC"),
            L("EeF"), L("IiJ"), L("MmN"), L("QqR"),
            L("h1f"), L("l2j"), L("p3n"), L("t4r"),
            L("HgG"), L("LkK"), L("PoO"), L("TsS"),
