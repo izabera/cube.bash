@@ -1,9 +1,9 @@
 #pragma once
+#include <array>
 #include <numeric>
+#include <span>
 #include <stdexcept>
 #include <string>
-#include <array>
-#include <span>
 #include <string_view>
 
 #if 0
@@ -21,6 +21,7 @@ HgG LkK PoO TsS  7.4 4.5 5.6 6.7  2.1 2.1 2.1 2.1  .b. .8. .9. .a.  .1. .1. .1. 
 #endif
 
 namespace rubik {
+// clang-format off
 enum cubie { // this is basically type safe
     ULB, UBL=ULB, LBU, LUB=LBU, BLU, BUL=BLU,
     URB, UBR=URB, BRU, BUR=BRU, RBU, RUB=RBU,
@@ -35,10 +36,11 @@ enum cubie { // this is basically type safe
     BL, LB, FL, LF, FR, RF, BR, RB,
     DF, FD, DR, RD, DB, BD, DL, LD,
 };
+// clang-format on
 
 struct cube {
-    std::array<unsigned char, 8> co{}, cp{0,1,2,3,4,5,6,7};
-    std::array<unsigned char, 12> eo{}, ep{0,1,2,3,4,5,6,7,8,9,10,11};
+    std::array<unsigned char, 8> co{}, cp{0, 1, 2, 3, 4, 5, 6, 7};
+    std::array<unsigned char, 12> eo{}, ep{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
     constexpr cube(std::span<const cubie> cubies) {
         int corners = 0, edges = 0;
@@ -49,19 +51,19 @@ struct cube {
             else if (c < 24) {
                 if (corners >= 8)
                     throw std::runtime_error("too many corners");
-                cp[corners] = c/3;
-                co[corners] = c%3;
+                cp[corners] = c / 3;
+                co[corners] = c % 3;
                 corners++;
-                cmask |= 1 << (c/3);
+                cmask |= 1 << c / 3;
             }
             else { // type safety is the #1 priority
                 if (corners != 8 || edges >= 12)
                     throw std::runtime_error("too many edges");
                 c -= 24;
-                ep[edges] = c/2;
-                eo[edges] = c%2;
+                ep[edges] = c / 2;
+                eo[edges] = c % 2;
                 edges++;
-                emask |= 1 << (c/2);
+                emask |= 1 << c / 2;
             }
         }
         if (cmask != 0xff || emask != 0xfff)
@@ -72,7 +74,7 @@ struct cube {
         if (sumco % 3 != 0 || sumeo % 2 != 0)
             throw std::runtime_error("bad orient");
 
-        auto parity = [](const auto& perm, int n) {
+        auto parity = [](const auto &perm, int n) {
             bool visited[12]{};
             int swaps = 0;
 
@@ -95,12 +97,12 @@ struct cube {
         if (parity(ep, 12) != parity(cp, 8))
             throw std::runtime_error("incorrect parity");
     }
-    constexpr cube(std::initializer_list<cubie> cubies) : cube(std::span(cubies)) { }
+    constexpr cube(std::initializer_list<cubie> cubies) : cube(std::span(cubies)) {}
 
     constexpr cube(std::string_view = "");
     constexpr cube(const char *s) : cube(std::string_view(s)) {}
     constexpr cube operator~() const { return *this; }
-    constexpr cube &operator+(const cube &) { return *this; }
+    constexpr cube &operator+=(const cube &) { return *this; }
     constexpr const cube operator+(const cube &) const { return *this; }
     constexpr bool operator==(const cube &other) const {
         return cp == other.cp && co == other.co
@@ -114,7 +116,7 @@ struct cube {
 
 static inline constexpr auto operator""_cube(const char *s, size_t) { return cube{s}; }
 
-
+// clang-format off
 constexpr static cube SOLVED {
     ULB, URB, URF, ULF,
     DLF, DRF, DRB, DLB,
@@ -158,6 +160,7 @@ constexpr static cube SOLVED {
     BU, FL, FR, BD,
     DF, DR, LB, DL,
 };
+// clang-format on
 
 constexpr inline cube::cube(std::string_view scramble) {
     for (size_t i = 0; i < scramble.size(); i++) {
@@ -166,7 +169,7 @@ constexpr inline cube::cube(std::string_view scramble) {
         auto state = &SOLVED;
         int count = 1;
         switch (scramble[i]) {
-            default: throw std::runtime_error("bad scramble");
+            default:  throw std::runtime_error("bad scramble");
             case 'U': state = &U; break;
             case 'D': state = &D; break;
             case 'R': state = &R; break;
@@ -181,7 +184,7 @@ constexpr inline cube::cube(std::string_view scramble) {
             }
         }
         for (auto c = 0; c < count; c++)
-            *this = *this + *state;
+            *this += *state;
     }
 }
-}
+} // namespace rubik

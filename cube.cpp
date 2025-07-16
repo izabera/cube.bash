@@ -1,6 +1,7 @@
 #include "cube.hpp"
 
 void rubik::cube::debug() const {
+    // clang-format off
     constexpr static const char *col[] = {
         "\x1b[48;5;231m  \x1b[m\x1b[31m", // white
         "\x1b[48;5;202m  \x1b[m\x1b[31m", // orange
@@ -69,6 +70,7 @@ void rubik::cube::debug() const {
                      L("UuV"),
                      L("x5v"),
                      L("XwW"));
+    // clang-format on
 }
 
 int main() {
