@@ -102,7 +102,7 @@ class cube {
 
     constexpr cube(std::string_view = "");
     constexpr cube(const char *s) : cube(std::string_view(s)) {}
-    constexpr cube operator~() const {
+    constexpr cube operator~() const noexcept {
         cube inverse;
         for (auto i = 0; i < 8; i++)
             inverse.cp[cp[i]] = i;
@@ -114,7 +114,7 @@ class cube {
             inverse.eo[i] = (2 - eo[inverse.ep[i]]) % 2;
         return inverse;
     }
-    constexpr cube &operator+=(const cube &other) {
+    constexpr cube &operator+=(const cube &other) noexcept {
         auto oldcp = cp;
         auto oldep = ep;
         auto oldco = co;
@@ -129,17 +129,17 @@ class cube {
         }
         return *this;
     }
-    constexpr cube operator+(const cube &other) const {
+    constexpr cube operator+(const cube &other) const noexcept {
         auto tmp = *this;
         tmp += other;
         return tmp;
     }
-    constexpr cube operator*(int n) const {
+    constexpr cube operator*(int n) const noexcept {
         auto tmp = *this;
         tmp *= n;
         return tmp;
     }
-    constexpr cube& operator*=(int n) {
+    constexpr cube& operator*=(int n) noexcept {
         if (n == 0)
             *this = {};
         if (n < 0) {
@@ -151,7 +151,7 @@ class cube {
             *this += state;
         return *this;
     }
-    constexpr bool operator==(const cube &other) const {
+    constexpr bool operator==(const cube &other) const noexcept {
         return cp == other.cp && co == other.co
             && ep == other.ep && eo == other.eo;
     }
