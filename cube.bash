@@ -190,7 +190,7 @@ shopt -s expand_aliases
 
 showtime () {
     local t=$(($2-$1))
-    printf '%s%s.%03ds\e[K\n' "${3+$3: }" "$((t/1000000))" "$(((t%1000000)/1000))"
+    printf '\r%s%s.%03ds\e[K\n' "${3+$3: }" "$((t/1000000))" "$(((t%1000000)/1000))"
 }
 
 
@@ -204,7 +204,7 @@ bfs () {
     bfs[REPLY]=0
 
     for ((;q<${#queue[@]};q++)); do
-        verbose printf %s\\r "$q"
+        verbose printf '%s\e[K\r' "$q"
         "$tonum" ${queue[q]}
         currnum=$REPLY
         for m in "${allowed[@]}"; do
@@ -234,38 +234,65 @@ ud1tonum () {
     done
     let "REPLY=2#${ep[*]}"
 }
-
-[[ -e prunes ]] && source ./prunes || {
-echo eo pruning table
-declare -n bfs=eoprune
-t0=${EPOCHREALTIME/.}
-bfs eotonum {U,D,R,L,F,B}{,2,\'}
-t1=${EPOCHREALTIME/.}
-showtime "$t0" "$t1" eoprune
-
-echo co pruning table
-declare -n bfs=coprune
-t0=${EPOCHREALTIME/.}
-bfs cotonum {U,D,R,L,F,B}{,2,\'}
-t1=${EPOCHREALTIME/.}
-showtime "$t0" "$t1" coprune
-
-echo ud1 pruning table
-declare -n bfs=ud1prune
-t0=${EPOCHREALTIME/.}
-bfs ud1tonum {U,D,R,L,F,B}{,2,\'}
-t1=${EPOCHREALTIME/.}
-showtime "$t0" "$t1" ud1prune
-
-declare -p eoprune coprune ud1prune > prunes
-
-# fixme: already very slow and it's only phase 1
-# eoprune: 7.191s
-# coprune: 7.848s
-# ud1prune: 1.950s
+eptonum () {
+    local ep=("${@:17:12}") i
+    REPLY=0
+    for i in {0..11}; do
+        ((i<4||i>7))&&((REPLY*=12,REPLY+=ep[i]))
+    done
+}
+cptonum () {
+    local cp=("${@:1:8}") i
+    REPLY=0
+    for i in {0..7}; do
+        ((REPLY*=8,REPLY+=cp[i]))
+    done
+}
+ud2tonum () {
+    local ep=("${@:17:12}") i IFS=
+    REPLY=0
+    for i in {0..11}; do
+        ((i>=4&&i<=7))&&((REPLY*=12,REPLY+=ep[i]))
+    done
 }
 
-echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]}
+
+
+prune () {
+    echo -n "$1" pruning table...
+    declare -gn bfs="$1prune"
+    t0=${EPOCHREALTIME/.}
+    bfs "$1tonum" "${@:2}"
+    t1=${EPOCHREALTIME/.}
+    showtime "$t0" "$t1" "$1prune"
+}
+
+[[ -e prunes ]] && source ./prunes || {
+    : > prunes
+
+    for prune in eo co ud1; do
+        prune "$prune" {U,D,F,B,L,R}{,2,\'}
+        declare -p "$prune"prune >> prunes
+    done
+
+    for prune in ep cp ud2; do
+        prune "$prune" {U,D}{,2,\'} {F,B,L,R}2
+        declare -p "$prune"prune >> prunes
+    done
+
+# fixme: very slow
+# eoprune: 7.174s
+# coprune: 7.790s
+# ud1prune: 1.973s
+# epprune: 119.318s
+# cpprune: 116.474s
+# ud2prune: 0.049s
+# eo=2048 co=2187 ud1=495 ep=40320 cp=40320 ud2=24
+
+}
+
+
+echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]} ep=${#epprune[@]} cp=${#cpprune[@]} ud2=${#ud2prune[@]}
 
 
 
