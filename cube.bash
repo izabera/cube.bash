@@ -170,17 +170,17 @@ domoves () {
     for m do add $REPLY ${moves[$m]}; done
 }
 
-demo () {
-    printf %s\\n "$1"
-    shift
-    domoves "$@"
-    show $REPLY
-}
-
-demo solved
-demo checkerboard U2 D2 R2 L2 F2 B2
-demo sune R U R\' U R U2 R\'
-demo tperm R U R\' U\' R\' F R2 U\' R\' U\' R U R\' F\'
+#demo () {
+#    printf %s\\n "$1"
+#    shift
+#    domoves "$@"
+#    show $REPLY
+#}
+#
+#demo solved
+#demo checkerboard U2 D2 R2 L2 F2 B2
+#demo sune R U R\' U R U2 R\'
+#demo tperm R U R\' U\' R\' F R2 U\' R\' U\' R U R\' F\'
 
 
 
@@ -267,7 +267,7 @@ prune () {
     showtime "$t0" "$t1" "$1prune"
 }
 
-[[ -e prunes ]] && source ./prunes || {
+[[ -e prunes ]] && source ./prunesfmt || {
     : > prunes
 
     for prune in eo co ud1; do
@@ -280,7 +280,7 @@ prune () {
         declare -p "$prune"prune >> prunes
     done
 
-# fixme: very slow
+# very slow but it's a one time cost
 # eoprune: 7.174s
 # coprune: 7.790s
 # ud1prune: 1.973s
@@ -291,50 +291,88 @@ prune () {
 
 }
 
-
 echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]} ep=${#epprune[@]} cp=${#cpprune[@]} ud2=${#ud2prune[@]}
 
 
 
 
 idastar () {
-    local lvl=$((lvl+1))
-    ((lvl==depth)) && return 1
+    local lvl=$((lvl+1)) next
+    local state=${*:2} m sofar=
+    #((lvl==depth)) && return 1
     verbose echo
-    local state=$* m sofar=
-    for m in {U,D,R,L,F,B}{,2,\'}; do
-        verbose printf '%*s%s\e[K\r' "$lvl" '' m="$sofar$m"
+    for m in "${allowed[@]}"; do
+        verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
+        verbose sofar+="$m "
+        [[ $m = $1* ]] && continue
         add $state ${moves[$m]}
-        [[ $REPLY = "$SOLVED" ]] && {
+        next=$REPLY
+        h $next
+        ((REPLY==0)) && {
             verbose echo
             break=1
             stack[lvl]=$m
             return
         }
-        idastar "$REPLY" && { stack[lvl]=$m; return; }
-        verbose sofar+="$m "
+        ((lvl+REPLY<depth)) && idastar ${m::1} $next && { stack[lvl]=$m; return; }
     done
     verbose printf '\e[A\e[J'
     return 1
+}
+
+
+searchdepth () {
+    break=0
+    for ((depth=2;!break;depth++)) do
+        echo depth=$((depth-1))
+        t0=${EPOCHREALTIME/.}
+        idastar Z $state; e=$?
+        t1=${EPOCHREALTIME/.}
+        showtime "$t0" "$t1"
+        ((e)) || break
+    done
+}
+
+# h is an admissible heuristic for a* that always returns a nonnegative integer
+# its result can be used to choose a priority bucket and simulate a priority queue
+h () {
+    local max h
+    for h in "${heuristics[@]}"; do
+        "$h"tonum "$@"
+        ((max=max<${h}prune[$REPLY]?${h}prune[$REPLY]:max))
+    done
+    REPLY=$max
 }
 
 solve () {
     echo ===solving===
     show "$@"
 
-    REPLY=
-    local depth state=$*
-    for ((depth=2;!break;depth++)) do
-        echo depth=$((depth-1))
-        t0=${EPOCHREALTIME/.}
-        idastar $state && break
-        t1=${EPOCHREALTIME/.}
-        showtime "$t0" "$t1"
-    done
-    t1=${EPOCHREALTIME/.}
-    showtime "$t0" "$t1"
-    echo "solution: ${stack[*]}"
+    local depth state=$* heuristics allowed
+
+    echo phase1
+    heuristics=(eo co ud1) allowed=({U,D,F,B,L,R}{,2,\'})
+    searchdepth
+    solution=(${stack[@]}) stack=()
+    domoves ${solution[@]}
+    add $state $REPLY
+    state=$REPLY
+
+    echo phase2
+    heuristics=(ep cp ud2) allowed=({U,D}{,2,\'} {F,B,L,R}2)
+    searchdepth
+    solution+=(${stack[@]})
+
+    echo "solution: ${solution[*]}"
 }
 
-#domoves R F2 L U
-#solve $REPLY
+#RANDOM=7
+#m=({U,D,F,B,L,R}{,2,\'}) scramble=()
+#for _ in {1..25}; do
+#    scramble+=(${m[RANDOM%18]})
+#done
+#scramble=(R F2 L U)
+scramble=(${@-R2 F2 U F L B})
+echo scramble: ${scramble[@]}
+domoves ${scramble[@]}
+solve $REPLY
