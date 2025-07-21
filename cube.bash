@@ -366,13 +366,13 @@ solve () {
     echo "solution: ${solution[*]}"
 }
 
-#RANDOM=7
-#m=({U,D,F,B,L,R}{,2,\'}) scramble=()
-#for _ in {1..25}; do
-#    scramble+=(${m[RANDOM%18]})
-#done
+RANDOM=7
+m=({U,D,F,B,L,R}{,2,\'}) scramble=()
+for _ in {1..25}; do
+    scramble+=(${m[RANDOM%18]})
+done
 #scramble=(R F2 L U)
-scramble=(${@-R2 F2 U F L B})
+#scramble=(${@-R2 F2 U F L B})
 echo scramble: ${scramble[@]}
 domoves ${scramble[@]}
 solve $REPLY
