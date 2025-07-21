@@ -187,6 +187,89 @@ demo tperm R U R\' U\' R\' F R2 U\' R\' U\' R U R\' F\'
 
 [[ $VERBOSE ]] && alias verbose= || alias verbose=#
 shopt -s expand_aliases
+
+showtime () {
+    local t=$(($2-$1))
+    printf '%s%s.%03ds\e[K\n' "${3+$3: }" "$((t/1000000))" "$(((t%1000000)/1000))"
+}
+
+
+
+
+bfs () {
+    local tonum=$1 allowed=("${@:2}")
+    local queue=("$SOLVED") q
+    local currnum nextnum nextstate
+    "$tonum" $SOLVED
+    bfs[REPLY]=0
+
+    for ((;q<${#queue[@]};q++)); do
+        verbose printf %s\\r "$q"
+        "$tonum" ${queue[q]}
+        currnum=$REPLY
+        for m in "${allowed[@]}"; do
+            add ${queue[q]} ${moves[$m]}
+            nextstate=$REPLY
+            "$tonum" $nextstate
+            nextnum=$REPLY
+            [[ -v bfs[nextnum] ]] && continue
+            queue+=("$nextstate")
+            ((bfs[nextnum]=bfs[currnum]+1))
+        done
+    done
+}
+
+eotonum () {
+    local eo=("${@:29:12}") IFS=
+    let "REPLY=2#${eo[*]}" # stupid vim hl
+}
+cotonum () {
+    local co=("${@:9:8}") IFS=
+    let "REPLY=3#${co[*]}"
+}
+ud1tonum () {
+    local ep=("${@:17:12}") i IFS=
+    for i in {0..11}; do
+        ((ep[i]=ep[i]>=4&&ep[i]<=7))
+    done
+    let "REPLY=2#${ep[*]}"
+}
+
+[[ -e prunes ]] && source ./prunes || {
+echo eo pruning table
+declare -n bfs=eoprune
+t0=${EPOCHREALTIME/.}
+bfs eotonum {U,D,R,L,F,B}{,2,\'}
+t1=${EPOCHREALTIME/.}
+showtime "$t0" "$t1" eoprune
+
+echo co pruning table
+declare -n bfs=coprune
+t0=${EPOCHREALTIME/.}
+bfs cotonum {U,D,R,L,F,B}{,2,\'}
+t1=${EPOCHREALTIME/.}
+showtime "$t0" "$t1" coprune
+
+echo ud1 pruning table
+declare -n bfs=ud1prune
+t0=${EPOCHREALTIME/.}
+bfs ud1tonum {U,D,R,L,F,B}{,2,\'}
+t1=${EPOCHREALTIME/.}
+showtime "$t0" "$t1" ud1prune
+
+declare -p eoprune coprune ud1prune > prunes
+
+# fixme: already very slow and it's only phase 1
+# eoprune: 7.191s
+# coprune: 7.848s
+# ud1prune: 1.950s
+}
+
+echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]}
+
+
+
+
 idastar () {
     local lvl=$((lvl+1))
     ((lvl==depth)) && return 1
@@ -219,12 +302,12 @@ solve () {
         t0=${EPOCHREALTIME/.}
         idastar $state && break
         t1=${EPOCHREALTIME/.}
-        printf %s.%03ds\\n $((t=t1-t0,t/1000000)) "$(((t%1000000)/1000))"
+        showtime "$t0" "$t1"
     done
     t1=${EPOCHREALTIME/.}
-    printf %s.%03ds\\n $((t=t1-t0,t/1000000)) "$(((t%1000000)/1000))"
+    showtime "$t0" "$t1"
     echo "solution: ${stack[*]}"
 }
 
-domoves R F2 L U
-solve $REPLY
+#domoves R F2 L U
+#solve $REPLY
