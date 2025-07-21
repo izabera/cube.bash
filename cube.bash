@@ -67,8 +67,11 @@ invert () {
 show () {
     local cp=("${@:1:8}") co=("${@:9:8}") ep=("${@:17:12}") eo=("${@:29:12}")
 
-    local col=(⬜️ 🟧 🟩 🟥 🟦 🟨)
-   #local col=($'\e[48;5;'{231,202,34,196,21,220}$'m  \e[m')
+    if [[ $EMOJI ]]; then
+        local col=(⬜️ 🟧 🟩 🟥 🟦 🟨)
+    else
+        local col=($'\e[48;5;'{231,202,34,196,21,220}$'m  \e[m')
+    fi
 
     local c=(
         "${col[0]}" "${col[1]}" "${col[4]}" # U
@@ -162,18 +165,66 @@ done
 
 
 
+domoves () {
+    REPLY=$SOLVED
+    for m do add $REPLY ${moves[$m]}; done
+}
+
 demo () {
     printf %s\\n "$1"
     shift
-    local cur=$SOLVED
-    for m do
-        add $cur ${moves[$m]}
-        cur=$REPLY
-    done
-    show $cur
+    domoves "$@"
+    show $REPLY
 }
 
 demo solved
 demo checkerboard U2 D2 R2 L2 F2 B2
 demo sune R U R\' U R U2 R\'
 demo tperm R U R\' U\' R\' F R2 U\' R\' U\' R U R\' F\'
+
+
+
+
+[[ $VERBOSE ]] && alias verbose= || alias verbose=#
+shopt -s expand_aliases
+idastar () {
+    local lvl=$((lvl+1))
+    ((lvl==depth)) && return 1
+    verbose echo
+    local state=$* m sofar=
+    for m in {U,D,R,L,F,B}{,2,\'}; do
+        verbose printf '%*s%s\e[K\r' "$lvl" '' m="$sofar$m"
+        add $state ${moves[$m]}
+        [[ $REPLY = "$SOLVED" ]] && {
+            verbose echo
+            break=1
+            stack[lvl]=$m
+            return
+        }
+        idastar "$REPLY" && { stack[lvl]=$m; return; }
+        verbose sofar+="$m "
+    done
+    verbose printf '\e[A\e[J'
+    return 1
+}
+
+solve () {
+    echo ===solving===
+    show "$@"
+
+    REPLY=
+    local depth state=$*
+    for ((depth=2;!break;depth++)) do
+        echo depth=$((depth-1))
+        t0=${EPOCHREALTIME/.}
+        idastar $state && break
+        t1=${EPOCHREALTIME/.}
+        printf %s.%03ds\\n $((t=t1-t0,t/1000000)) "$(((t%1000000)/1000))"
+    done
+    t1=${EPOCHREALTIME/.}
+    printf %s.%03ds\\n $((t=t1-t0,t/1000000)) "$(((t%1000000)/1000))"
+    echo "solution: ${stack[*]}"
+}
+
+domoves R F2 L U
+solve $REPLY
