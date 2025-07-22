@@ -201,7 +201,7 @@ bfs () {
     local queue=("$SOLVED") q
     local currnum nextnum nextstate
     "$tonum" $SOLVED
-    bfs[REPLY]=0
+    bfs[$REPLY]=0
 
     for ((;q<${#queue[@]};q++)); do
         verbose printf '%s\e[K\r' "$q"
@@ -212,9 +212,9 @@ bfs () {
             nextstate=$REPLY
             "$tonum" $nextstate
             nextnum=$REPLY
-            [[ -v bfs[nextnum] ]] && continue
+            [[ -v bfs[$nextnum] ]] && continue
             queue+=("$nextstate")
-            ((bfs[nextnum]=bfs[currnum]+1))
+            ((bfs[$nextnum]=bfs[$currnum]+1))
         done
     done
 }
@@ -267,15 +267,17 @@ prune () {
     showtime "$t0" "$t1" "$1prune"
 }
 
-[[ -e prunes ]] && source ./prunesfmt || {
+[[ -e prunes ]] && source ./prunes || {
     : > prunes
 
     for prune in eo co ud1; do
+        declare -A "$prune"prune
         prune "$prune" {U,D,F,B,L,R}{,2,\'}
         declare -p "$prune"prune >> prunes
     done
 
     for prune in ep cp ud2; do
+        declare -A "$prune"prune
         prune "$prune" {U,D}{,2,\'} {F,B,L,R}2
         declare -p "$prune"prune >> prunes
     done
@@ -296,6 +298,9 @@ echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]} ep=${#epprune[@]} c
 
 
 
+# no U U, no D U, yes U D
+declare -A badnext=([U]=U [D]=UD [R]=R [L]=RL [F]=F [B]=FB)
+
 idastar () {
     local lvl=$((lvl+1)) next
     local state=${*:2} m sofar=
@@ -303,8 +308,9 @@ idastar () {
     verbose echo
     for m in "${allowed[@]}"; do
         verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
+        [[ $m = [${badnext[$1]}]* ]] && continue
         verbose sofar+="$m "
-        [[ $m = $1* ]] && continue
+        verbose ((ida++))
         add $state ${moves[$m]}
         next=$REPLY
         h $next
@@ -322,7 +328,7 @@ idastar () {
 
 
 searchdepth () {
-    break=0
+    local break=0 ida=0 t0 t1
     for ((depth=2;!break;depth++)) do
         echo depth=$((depth-1))
         t0=${EPOCHREALTIME/.}
@@ -331,6 +337,7 @@ searchdepth () {
         showtime "$t0" "$t1"
         ((e)) || break
     done
+    verbose echo $ida states checked
 }
 
 # h is an admissible heuristic for a* that always returns a nonnegative integer
@@ -344,35 +351,61 @@ h () {
     REPLY=$max
 }
 
+simplify () {
+    set "${@//\'/3}"
+    set "${@/%[^23]/&1}"
+    local IFS= join='(.*)(.)([123])\2([123])(.*)'
+    REPLY=$*
+    while [[ $REPLY =~ $join ]]; do
+        REPLY=${BASH_REMATCH[1]}${BASH_REMATCH[2]}$((BASH_REMATCH[3]+BASH_REMATCH[4]))${BASH_REMATCH[5]}
+        REPLY=${REPLY//5/1}
+        REPLY=${REPLY//6/2}
+        REPLY=${REPLY//?4}
+    done
+    REPLY=${REPLY//[123]/& }
+    REPLY=${REPLY//1}
+    REPLY=${REPLY//3/\'}
+}
+
 solve () {
     echo ===solving===
     show "$@"
 
-    local depth state=$* heuristics allowed
+    local depth state=$* heuristics allowed t
 
+    t[0]=${EPOCHREALTIME/.}
     echo phase1
-    heuristics=(eo co ud1) allowed=({U,D,F,B,L,R}{,2,\'})
+    heuristics=(eo co ud1) allowed=({F,B,L,R,U,D}{,2,\'})
     searchdepth
     solution=(${stack[@]}) stack=()
     domoves ${solution[@]}
     add $state $REPLY
     state=$REPLY
+    t[1]=${EPOCHREALTIME/.}
 
     echo phase2
     heuristics=(ep cp ud2) allowed=({U,D}{,2,\'} {F,B,L,R}2)
     searchdepth
     solution+=(${stack[@]})
+    simplify "${solution[@]}"
+    solution=($REPLY)
+    t[2]=${EPOCHREALTIME/.}
 
-    echo "solution: ${solution[*]}"
+    showtime "${t[0]}" "${t[1]}" phase1
+    showtime "${t[1]}" "${t[2]}" phase2
+    echo "solution: ${solution[*]} (${#solution[@]} HTM)"
 }
 
-RANDOM=7
-m=({U,D,F,B,L,R}{,2,\'}) scramble=()
-for _ in {1..25}; do
-    scramble+=(${m[RANDOM%18]})
-done
+#RANDOM=7
+#m=({U,D,F,B,L,R}{,2,\'}) scramble=()
+#for _ in {1..25}; do
+#    scramble+=(${m[RANDOM%18]})
+#done
 #scramble=(R F2 L U)
 #scramble=(${@-R2 F2 U F L B})
-echo scramble: ${scramble[@]}
-domoves ${scramble[@]}
-solve $REPLY
+#echo scramble: ${scramble[@]}
+#domoves ${scramble[@]}
+#solve $REPLY
+
+FLIPPY="0 1 2 3 4 5 6 7 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 0 0 0 0 0 1 1 0 0 0 0 0"
+solve $FLIPPY
