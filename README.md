@@ -1,4 +1,4 @@
-https://github.com/user-attachments/assets/22b26fd6-47c5-4f12-b76e-6ea144527fcb
+https://github.com/user-attachments/assets/ff125689-e8a3-4759-8982-ddf335eb5468
 
 a kociemba 2phase solver in bash
 

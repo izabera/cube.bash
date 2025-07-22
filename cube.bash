@@ -421,26 +421,27 @@ solve () {
 
     local depth state=$* heuristics allowed t
 
-    t[0]=${EPOCHREALTIME/.}
     echo phase1
+    t[0]=${EPOCHREALTIME/.}
     heuristics=(eo co ud1) allowed=({F,B,L,R,U,D}{,2,\'})
     searchdepth
+    t[1]=${EPOCHREALTIME/.}
     solution=(${stack[@]}) stack=()
     domoves ${solution[@]}
     add $state $REPLY
     state=$REPLY
-    t[1]=${EPOCHREALTIME/.}
 
     echo phase2
+    t[2]=${EPOCHREALTIME/.}
     heuristics=(ep cp ud2) allowed=({U,D}{,2,\'} {F,B,L,R}2)
     searchdepth
+    t[3]=${EPOCHREALTIME/.}
     solution+=(${stack[@]})
     simplify "${solution[@]}"
     solution=($REPLY)
-    t[2]=${EPOCHREALTIME/.}
 
     showtime "${t[0]}" "${t[1]}" phase1
-    showtime "${t[1]}" "${t[2]}" phase2
+    showtime "${t[2]}" "${t[3]}" phase2
     printf 'solution: \e[32m%s\e[m (\e[32m%s\e[m HTM)\e[m\n' "${solution[*]}" "${#solution[@]}"
 }
 
@@ -453,7 +454,7 @@ solve () {
 #scramble=(${@-R2 F2 U F L B})
 if (( $# )); then
     echo scramble: "$@"
-    domoves "$@"
+    domoves $*
     solve $REPLY
 else
     FLIPPY="0 1 2 3 4 5 6 7 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 0 0 0 0 0 1 1 0 0 0 0 0"
