@@ -182,17 +182,6 @@ domoves () {
     for m do add $REPLY ${moves[$m]}; done
 }
 
-#demo () {
-#    printf %s\\n "$1"
-#    shift
-#    domoves "$@"
-#    show $REPLY
-#}
-#
-#demo solved
-#demo checkerboard U2 D2 R2 L2 F2 B2
-#demo sune R U R\' U R U2 R\'
-#demo tperm R U R\' U\' R\' F R2 U\' R\' U\' R U R\' F\'
 
 
 
@@ -233,7 +222,7 @@ bfs () {
 
 eotonum () {
     local eo=("${@:29:12}") IFS=
-    let "REPLY=2#${eo[*]}" # stupid vim hl
+    let "REPLY=2#${eo[*]}"
 }
 cotonum () {
     local co=("${@:9:8}") IFS=
@@ -267,6 +256,22 @@ ud2tonum () {
         ((i>=4&&i<=7))&&((REPLY*=12,REPLY+=ep[i]))
     done
 }
+
+# since holding a table with <1M elements in memory doesn't seem to be a problem in 2025,
+# and since value lookup is far from the bottleneck for bash,
+# here's a couple of experimental pruning heuristics
+
+# eo + u co = 2**11*3**4 = 165888
+eoucotonum () {
+    local co=("${@:9:4}") eo=("${@:29:12}") IFS=
+    let "REPLY=3#${co[*]}<<12|2#${eo[*]}"
+}
+# co + u eo = 3**7*2**4 = 36992
+coueotonum () {
+    local co=("${@:9:8}") eo=("${@:29:4}") IFS=
+    let "REPLY=3#${co[*]}<<4|2#${eo[*]}"
+}
+
 
 # todo: convert all tonum functions and their callers use these
 eotonum2 () {
@@ -308,6 +313,16 @@ ud2tonum2 () {
         ((i>=4&&i<=7))&&((REPLY*=12,REPLY+=ep[i]))
     done
 }
+eoucotonum2 () {
+    local -n co=$1co eo=$1eo
+    local IFS=
+    let "REPLY=3#${co[*]::4}<<12|2#${eo[*]}"
+}
+coueotonum2 () {
+    local -n co=$1co eo=$1eo
+    local IFS=
+    let "REPLY=3#${co[*]}<<4|2#${eo[*]:0:4}"
+}
 
 
 
@@ -323,7 +338,7 @@ prune () {
 [[ -e prunes ]] && source ./prunes || {
     : > prunes
 
-    for prune in eo co ud1; do
+    for prune in eouco coueo eo co ud1; do
         declare -A "$prune"prune
         prune "$prune" {U,D,F,B,L,R}{,2,\'}
         declare -p "$prune"prune >> prunes
@@ -346,7 +361,9 @@ prune () {
 
 }
 
-echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]} ep=${#epprune[@]} cp=${#cpprune[@]} ud2=${#ud2prune[@]}
+echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]} \
+     ep=${#epprune[@]} cp=${#cpprune[@]} ud2=${#ud2prune[@]} \
+     eouco=${#eoucoprune[@]} coueo=${#coueoprune[@]}
 
 
 
@@ -433,7 +450,7 @@ solve () {
 
     echo phase1
     t[0]=${EPOCHREALTIME/.}
-    heuristics=(eo co ud1) allowed=({F,B,L,R}{,\'} {F,B,R,L}2 {U,D}{,2,\'})
+    heuristics=(eouco coueo ud1) allowed=({F,B,L,R}{,\'} {F,B,R,L}2 {U,D}{,2,\'})
     if quickcheck $state; then
         searchdepth
         solution=(${stack[@]}) stack=()
@@ -460,6 +477,39 @@ solve () {
     printf 'solution: \e[32m%s\e[m (\e[32m%s\e[m HTM)\e[m\n' "${solution[*]}" "${#solution[@]}"
 }
 
+FLIPPY="0 1 2 3 4 5 6 7 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 0 0 0 0 0 1 1 0 0 0 0 0"
+
+if (( TEST )); then
+    path=(L F\' D F2 D\' F L)
+    REPLY=$FLIPPY
+    echo initial
+    set Z $REPLY
+    show ${*:2}
+
+    heuristics=(eouco coueo eo co ud1)
+    allowed=({F,B,L,R}{,\'} {F,B,R,L}2 {U,D}{,2,\'})
+
+    for m in ${path[@]}; do
+        echo lvl=$((++lvl))
+        cp=("${@:2:8}") co=("${@:10:8}") ep=("${@:18:12}") eo=("${@:30:12}")
+        #for m in "${allowed[@]}"; do
+        [[ $m = [${badnext[$1]}]* ]] && continue
+        echo m=$m
+        add2 ${moves[$m]}
+        show ${nextcp[*]} ${nextco[*]} ${nextep[*]} ${nexteo[*]}
+        set $m ${nextcp[*]} ${nextco[*]} ${nextep[*]} ${nexteo[*]}
+        max=0
+        for h in "${heuristics[@]}"; do
+            "$h"tonum2 next
+            r1=$REPLY
+            "$h"tonum ${nextcp[*]} ${nextco[*]} ${nextep[*]} ${nexteo[*]}
+            r2=$REPLY
+            printf '%-30s%s\n' "build ${h}prune[$r1]=$((${h}prune[$r1]))" "lookup ${h}prune[$r2]=$((${h}prune[$r2]))"
+        done
+        echo
+    done
+    exit
+fi
 #RANDOM=7
 #m=({U,D,F,B,L,R}{,2,\'}) scramble=()
 #for _ in {1..25}; do
@@ -472,6 +522,5 @@ if (( $# )); then
     domoves $*
     solve $REPLY
 else
-    FLIPPY="0 1 2 3 4 5 6 7 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 0 0 0 0 0 1 1 0 0 0 0 0"
     solve $FLIPPY
 fi
