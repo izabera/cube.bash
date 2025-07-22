@@ -49,6 +49,18 @@ add () {
     REPLY=${cube[*]}
 }
 
+# todo: convert add to do this and make it work with all its callers
+add2 () {
+    local rhscp=("${@: 1:8}") rhsco=("${@: 9:8}") rhsep=("${@:17:12}") rhseo=("${@:29:12}") i
+
+    for ((i=0;i<8;i++)) do
+        ((nextcp[i]=cp[rhscp[i]], nextco[i]=(co[rhscp[i]]+rhsco[i])%3))
+    done
+    for ((i=0;i<12;i++)) do
+        ((nextep[i]=ep[rhsep[i]], nexteo[i]=(eo[rhsep[i]]+rhseo[i])%2))
+    done
+}
+
 invert () {
     local cp=("${@:1:8}") co=("${@:9:8}") ep=("${@:17:12}") eo=("${@:29:12}")
     local inv{c,e}{p,o} i cube
@@ -256,6 +268,47 @@ ud2tonum () {
     done
 }
 
+# todo: convert all tonum functions and their callers use these
+eotonum2 () {
+    local -n eo=$1eo
+    local IFS=
+    let "REPLY=2#${eo[*]}"
+}
+cotonum2 () {
+    local -n co=$1co
+    local IFS=
+    let "REPLY=3#${co[*]}"
+}
+ud1tonum2 () {
+    local -n ep=$1ep
+    local IFS=
+    for i in {0..11}; do
+        ((tmp[i]=ep[i]>=4&&ep[i]<=7))
+    done
+    let "REPLY=2#${tmp[*]}"
+}
+eptonum2 () {
+    local -n ep=$1ep
+    REPLY=0
+    for i in {0..11}; do
+        ((i<4||i>7))&&((REPLY*=12,REPLY+=ep[i]))
+    done
+}
+cptonum2 () {
+    local -n cp=$1cp
+    REPLY=0
+    for i in {0..7}; do
+        ((REPLY*=8,REPLY+=cp[i]))
+    done
+}
+ud2tonum2 () {
+    local -n ep=$1ep
+    REPLY=0
+    for i in {0..11}; do
+        ((i>=4&&i<=7))&&((REPLY*=12,REPLY+=ep[i]))
+    done
+}
+
 
 
 prune () {
@@ -302,21 +355,20 @@ echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]} ep=${#epprune[@]} c
 declare -A badnext=([U]=U [D]=UD [R]=R [L]=RL [F]=F [B]=FB)
 
 idastar () {
-    local lvl=$((lvl+1)) next max h
-    local state=${*:2} m sofar=
+    local lvl=$((lvl+1)) max h m sofar \
+          cp=("${@:2:8}") co=("${@:10:8}") ep=("${@:18:12}") eo=("${@:30:12}")
     verbose echo
     for m in "${allowed[@]}"; do
         verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
         [[ $m = [${badnext[$1]}]* ]] && continue
         verbose sofar+="$m "
         verbose ((ida++))
-        add $state ${moves[$m]}
-        next=$REPLY
+        add2 ${moves[$m]}
 
         max=0
         # h is an admissible heuristic for a* that always returns a nonnegative integer
         for h in "${heuristics[@]}"; do
-            "$h"tonum $next
+            "$h"tonum2 next
             ((h=${h}prune[$REPLY],max=max<h?h:max,lvl+h<depth)) || continue 2
         done
 
@@ -326,7 +378,7 @@ idastar () {
             stack[lvl]=$m
             return
         }
-        idastar ${m::1} $next && { stack[lvl]=$m; return; }
+        idastar ${m::1} ${nextcp[*]} ${nextco[*]} ${nextep[*]} ${nexteo[*]} && { stack[lvl]=$m; return; }
     done
     verbose printf '\e[A\e[J'
     return 1
