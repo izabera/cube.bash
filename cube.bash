@@ -399,9 +399,11 @@ solve () {
 #done
 #scramble=(R F2 L U)
 #scramble=(${@-R2 F2 U F L B})
-#echo scramble: ${scramble[@]}
-#domoves ${scramble[@]}
-#solve $REPLY
-
-FLIPPY="0 1 2 3 4 5 6 7 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 0 0 0 0 0 1 1 0 0 0 0 0"
-solve $FLIPPY
+if (( $# )); then
+    echo scramble: "$@"
+    domoves "$@"
+    solve $REPLY
+else
+    FLIPPY="0 1 2 3 4 5 6 7 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 0 0 0 0 0 1 1 0 0 0 0 0"
+    solve $FLIPPY
+fi
