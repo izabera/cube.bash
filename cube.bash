@@ -433,7 +433,7 @@ solve () {
 
     echo phase1
     t[0]=${EPOCHREALTIME/.}
-    heuristics=(eo co ud1) allowed=({F,B,L,R,U,D}{,2,\'})
+    heuristics=(eo co ud1) allowed=({F,B,L,R}{,\'} {F,B,R,L}2 {U,D}{,2,\'})
     if quickcheck $state; then
         searchdepth
         solution=(${stack[@]}) stack=()
