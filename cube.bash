@@ -202,7 +202,7 @@ shopt -s expand_aliases
 
 showtime () {
     local t=$(($2-$1))
-    printf '\r%s%s.%03ds\e[K\n' "${3+$3: }" "$((t/1000000))" "$(((t%1000000)/1000))"
+    printf '\r%s%s.%03ds\e[m\e[K\n' "${3+$3:$' \e[32m'}" "$((t/1000000))" "$(((t%1000000)/1000))"
 }
 
 
@@ -395,7 +395,7 @@ searchdepth () {
         showtime "$t0" "$t1"
         ((e)) || break
     done
-    verbose echo $ida states checked
+    verbose printf '\e[32m%s\e[m states reached\n' "$ida"
 }
 
 
@@ -441,7 +441,7 @@ solve () {
 
     showtime "${t[0]}" "${t[1]}" phase1
     showtime "${t[1]}" "${t[2]}" phase2
-    echo "solution: ${solution[*]} (${#solution[@]} HTM)"
+    printf 'solution: \e[32m%s\e[m (\e[32m%s\e[m HTM)\e[m\n' "${solution[*]}" "${#solution[@]}"
 }
 
 #RANDOM=7
