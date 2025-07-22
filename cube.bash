@@ -415,28 +415,43 @@ simplify () {
     REPLY=${REPLY//3/\'}
 }
 
+# quickly check that the current phase isn't already solved
+quickcheck () {
+    for h in "${heuristics[@]}"; do
+        "$h"tonum "$@"
+        ((${h}prune[$REPLY])) && return
+    done
+    return 1
+}
+
 solve () {
     echo ===solving===
     show "$@"
 
     local depth state=$* heuristics allowed t
 
+
     echo phase1
     t[0]=${EPOCHREALTIME/.}
     heuristics=(eo co ud1) allowed=({F,B,L,R,U,D}{,2,\'})
-    searchdepth
+    if quickcheck $state; then
+        searchdepth
+        solution=(${stack[@]}) stack=()
+        domoves ${solution[@]}
+        add $state $REPLY
+        state=$REPLY
+    fi
     t[1]=${EPOCHREALTIME/.}
-    solution=(${stack[@]}) stack=()
-    domoves ${solution[@]}
-    add $state $REPLY
-    state=$REPLY
 
     echo phase2
     t[2]=${EPOCHREALTIME/.}
     heuristics=(ep cp ud2) allowed=({U,D}{,2,\'} {F,B,L,R}2)
-    searchdepth
+    if quickcheck $state; then
+        searchdepth
+        solution+=(${stack[@]})
+    fi
     t[3]=${EPOCHREALTIME/.}
-    solution+=(${stack[@]})
+
     simplify "${solution[@]}"
     solution=($REPLY)
 
