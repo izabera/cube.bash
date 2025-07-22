@@ -302,9 +302,8 @@ echo eo=${#eoprune[@]} co=${#coprune[@]} ud1=${#ud1prune[@]} ep=${#epprune[@]} c
 declare -A badnext=([U]=U [D]=UD [R]=R [L]=RL [F]=F [B]=FB)
 
 idastar () {
-    local lvl=$((lvl+1)) next
+    local lvl=$((lvl+1)) next max h
     local state=${*:2} m sofar=
-    #((lvl==depth)) && return 1
     verbose echo
     for m in "${allowed[@]}"; do
         verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
@@ -313,14 +312,21 @@ idastar () {
         verbose ((ida++))
         add $state ${moves[$m]}
         next=$REPLY
-        h $next
-        ((REPLY==0)) && {
+
+        max=0
+        # h is an admissible heuristic for a* that always returns a nonnegative integer
+        for h in "${heuristics[@]}"; do
+            "$h"tonum $next
+            ((h=${h}prune[$REPLY],max=max<h?h:max,lvl+h<depth)) || continue 2
+        done
+
+        ((max==0)) && {
             verbose echo
             break=1
             stack[lvl]=$m
             return
         }
-        ((lvl+REPLY<depth)) && idastar ${m::1} $next && { stack[lvl]=$m; return; }
+        idastar ${m::1} $next && { stack[lvl]=$m; return; }
     done
     verbose printf '\e[A\e[J'
     return 1
@@ -340,16 +346,6 @@ searchdepth () {
     verbose echo $ida states checked
 }
 
-# h is an admissible heuristic for a* that always returns a nonnegative integer
-# its result can be used to choose a priority bucket and simulate a priority queue
-h () {
-    local max h
-    for h in "${heuristics[@]}"; do
-        "$h"tonum "$@"
-        ((max=max<${h}prune[$REPLY]?${h}prune[$REPLY]:max))
-    done
-    REPLY=$max
-}
 
 simplify () {
     set "${@//\'/3}"
