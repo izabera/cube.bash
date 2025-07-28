@@ -14,41 +14,39 @@ fi
 source ./tables
 
 # no U U, no D U, yes U D
-declare -A badnext=([U]=U [D]=UD [R]=R [L]=RL [F]=F [B]=FB)
+declare -A badnext=(
+    [U]=U  [U2]=U  [U\']=U
+    [D]=UD [D2]=UD [D\']=UD
+    [R]=R  [R2]=R  [R\']=R
+    [L]=RL [L2]=RL [L\']=RL
+    [F]=F  [F2]=F  [F\']=F
+    [B]=FB [B2]=FB [B\']=FB
+)
 
+# h=(co eo ud1) or h=(cp ep ud2)
 idastar () {
-    local lvl=$((lvl+1)) max h m sofar \
-          cp=("${@:2:8}") co=("${@:10:8}") ep=("${@:18:12}") eo=("${@:30:12}")
+    local lvl=$((lvl+1)) m this=("${@:2}") next sofar
     verbose echo
+
     for m in "${allowed[@]}"; do
         verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
-        [[ $m = [${badnext[$1]}]* ]] && continue
-        verbose sofar+="$m "
-        verbose ((ida++))
-        add2 ${moves[$m]}
+        [[ $m != [${badnext[$1]}]* ]] || continue
+        sofar+="$m "
+        ((ida++))
+        ((lvl+${h[0]}prune[$((next[0]=${h[0]}trans[${this[0]}$m]))]<depth)) &&
+        ((lvl+${h[1]}prune[$((next[1]=${h[1]}trans[${this[1]}$m]))]<depth)) &&
+        ((lvl+${h[2]}prune[$((next[2]=${h[2]}trans[${this[2]}$m]))]<depth)) || continue
 
-        max=0
-        # h is an admissible heuristic for a* that always returns a nonnegative integer
-        for h in "${heuristics[@]}"; do
-            "$h"tonum2 next
-            ((h=${h}prune[$REPLY],max=max<h?h:max,lvl+h<depth)) || continue 2
-        done
-
-        ((max==0)) && {
-            verbose echo
-            break=1
-            stack[lvl]=$m
-            return
-        }
-        idastar ${m::1} ${nextcp[*]} ${nextco[*]} ${nextep[*]} ${nexteo[*]} && { stack[lvl]=$m; return; }
+        stack[lvl]=$m
+        ((next[0]==goal[0]&&next[1]==goal[1]&&next[2]==goal[2])) && return 0
+        idastar "$m" "${next[@]}" && return
     done
     verbose printf '\e[A\e[J'
     return 1
 }
 
-
 searchdepth () {
-    local break=0 ida=0 t0 t1
+    local break=0 ida=0 t0 t1 state=$*
     for ((depth=2;!break;depth++)) do
         echo depth=$((depth-1))
         t0=${EPOCHREALTIME/.}
@@ -59,7 +57,6 @@ searchdepth () {
     done
     verbose printf '\e[32m%s\e[m states reached\n' "$ida"
 }
-
 
 simplify () {
     set "${@//\'/3}"
@@ -78,67 +75,61 @@ simplify () {
 }
 
 # quickly check that the current phase isn't already solved
-quickcheck () {
-    for h in "${heuristics[@]}"; do
-        "$h"tonum "$@"
-        ((${h}prune[$REPLY])) && return
-    done
-    return 1
-}
+quickcheck () (($1!=goal[0]||$2!=goal[1]||$3!=goal[2]))
 
-domoves () {
-    REPLY=$SOLVED
-    for m do add $REPLY ${moves[$m]}; done
-}
+domoves () for m do add $REPLY ${moves[$m]}; done
 
 solve () {
     echo ===solving===
-    show "$@"
+    toshow "$@"
 
-    local depth state=$* heuristics allowed t
-
+    local depth state=($*) h allowed t stack=()
+    local solved=($SOLVED) solution=()
 
     echo phase1
     t[0]=${EPOCHREALTIME/.}
-    heuristics=(co eo ud1) allowed=({F,B,L,R}{,\'} {F,B,R,L}2 {U,D}{,2,\'})
-    if quickcheck $state; then
-        searchdepth
+    phase1state=(${state[1]} ${state[3]} ${state[4]})
+    goal=(${solved[1]} ${solved[3]} ${solved[4]})
+    h=(co eo ud1)
+    allowed=({F,B,L,R}{,\'} {F,B,R,L}2 {U,D}{,2,\'})
+    if quickcheck ${phase1state[@]}; then
+        searchdepth ${phase1state[@]}
         solution=(${stack[@]}) stack=()
+        REPLY=$*
         domoves ${solution[@]}
-        add $state $REPLY
-        state=$REPLY
+        state=($REPLY)
     fi
     t[1]=${EPOCHREALTIME/.}
 
     echo phase2
     t[2]=${EPOCHREALTIME/.}
-    heuristics=(ep cp ud2) allowed=({U,D}{,2,\'} {F,B,L,R}2)
-    if quickcheck $state; then
-        searchdepth
+    phase2state=(${state[0]} ${state[6]} ${state[5]}) # restricted ep
+    goal=(${solved[0]} ${solved[6]} ${solved[5]})
+    h=(cp ep ud2)
+    allowed=({U,D}{,2,\'} {F,B,L,R}2)
+    if quickcheck ${phase2state[@]}; then
+        searchdepth ${phase2state[@]}
         solution+=(${stack[@]})
     fi
     t[3]=${EPOCHREALTIME/.}
 
     simplify "${solution[@]}"
-    solution=($REPLY)
+    solution=($REPLY) stack=()
 
     showtime "${t[0]}" "${t[1]}" phase1
     showtime "${t[2]}" "${t[3]}" phase2
     printf 'solution: \e[32m%s\e[m (\e[32m%s\e[m HTM)\e[m\n' "${solution[*]}" "${#solution[@]}"
 }
 
-#RANDOM=7
-#m=({U,D,F,B,L,R}{,2,\'}) scramble=()
-#for _ in {1..25}; do
-#    scramble+=(${m[RANDOM%18]})
-#done
-#scramble=(R F2 L U)
-#scramble=(${@-R2 F2 U F L B})
 if (( $# )); then
     echo scramble: "$@"
+    REPLY=$SOLVED
     domoves $*
     solve $REPLY
 else
-    FLIPPY="0 1 2 3 4 5 6 7 0 0 0 0 0 0 0 0 0 1 2 3 4 5 6 7 8 9 10 11 0 0 0 0 0 1 1 0 0 0 0 0"
-    solve $FLIPPY
+    while read -rep 'scramble: ' scramble; do
+        REPLY=$SOLVED
+        domoves $scramble
+        solve $REPLY
+    done
 fi

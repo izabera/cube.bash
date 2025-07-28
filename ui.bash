@@ -1,3 +1,16 @@
+toshow () {
+    local args=("$@") cp co ep=(0 1 2 3 4 5 6 7 8 9 10 11) eo i
+    for i in {0..7}; do
+        (( cp[7-i] = args[0]%8, args[0] /= 8 ))
+        (( co[7-i] = args[1]%3, args[1] /= 3 ))
+    done
+    for i in {0..11}; do
+        (( ep[11-i] = args[2]%12, args[2] /= 12 ))
+        (( eo[11-i] = args[3]%2, args[3] /= 2 ))
+    done
+    show ${cp[*]} ${co[*]} ${ep[*]} ${eo[*]}
+}
+
 # todo: make this look less awful
 show () {
     local cp=("${@:1:8}") co=("${@:9:8}") ep=("${@:17:12}") eo=("${@:29:12}")
