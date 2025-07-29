@@ -7,3 +7,7 @@ it will recalculate the pruning tables if they're missing
 this particular version uses some rather large tables (at least for bash's standards)
 
 for now it finds an optimal solution for phase 1 and solves phase 2 from there
+
+current speed records on my machine:
+- phase 1: 36267 states in 0.330 sec (110k/s)
+- phase 2: 364509 states in 4.638 sec (78.5k/s)

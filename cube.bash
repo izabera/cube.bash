@@ -31,8 +31,8 @@ idastar () {
     for m in "${allowed[@]}"; do
         verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
         [[ $m != [${badnext[$1]}]* ]] || continue
-        sofar+="$m "
-        ((ida++))
+        verbose sofar+="$m "
+        verbose ((ida++))
         ((lvl+${h[0]}prune[$((next[0]=${h[0]}trans[${this[0]}$m]))]<depth)) &&
         ((lvl+${h[1]}prune[$((next[1]=${h[1]}trans[${this[1]}$m]))]<depth)) &&
         ((lvl+${h[2]}prune[$((next[2]=${h[2]}trans[${this[2]}$m]))]<depth)) || continue
