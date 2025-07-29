@@ -25,7 +25,7 @@ declare -A badnext=(
 
 # h=(co eo ud1) or h=(cp ep ud2)
 idastar () {
-    local lvl=$((lvl+1)) m this=("${@:2}") next sofar
+    local lvl=$((lvl+1)) m next{0,1,2} sofar
     verbose echo
 
     for m in "${allowed[@]}"; do
@@ -33,27 +33,29 @@ idastar () {
         [[ $m != [${badnext[$1]}]* ]] || continue
         verbose sofar+="$m "
         verbose ((ida++))
-        ((lvl+${h[0]}prune[$((next[0]=${h[0]}trans[${this[0]}$m]))]<depth)) &&
-        ((lvl+${h[1]}prune[$((next[1]=${h[1]}trans[${this[1]}$m]))]<depth)) &&
-        ((lvl+${h[2]}prune[$((next[2]=${h[2]}trans[${this[2]}$m]))]<depth)) || continue
+        ((lvl+${h0}prune[$((next0=${h0}trans[$2$m]))]<depth)) &&
+        ((lvl+${h1}prune[$((next1=${h1}trans[$3$m]))]<depth)) &&
+        ((lvl+${h2}prune[$((next2=${h2}trans[$4$m]))]<depth)) || continue
 
         stack[lvl]=$m
-        ((next[0]==goal[0]&&next[1]==goal[1]&&next[2]==goal[2])) && return 0
-        idastar "$m" "${next[@]}" && return
+        ((next0^goal0|next1^goal1|next2^goal2)) || return 0
+        idastar "$m" "$next0" "$next1" "$next2" && return
     done
     verbose printf '\e[A\e[J'
     return 1
 }
 
 searchdepth () {
-    local break=0 ida=0 t0 t1 state=$*
-    for ((depth=2;!break;depth++)) do
-        echo depth=$((depth-1))
+    local ida=0 t0 t1 state=$* depth=2 d e=1
+    ((d=${h0}prune[$1],depth=depth<d?d:depth))
+    ((d=${h1}prune[$2],depth=depth<d?d:depth))
+    ((d=${h2}prune[$3],depth=depth<d?d:depth))
+    for ((;e;depth++)) do
+        echo "depth=$((depth-1))"
         t0=${EPOCHREALTIME/.}
         idastar Z $state; e=$?
         t1=${EPOCHREALTIME/.}
         showtime "$t0" "$t1"
-        ((e)) || break
     done
     verbose printf '\e[32m%s\e[m states reached\n' "$ida"
 }
@@ -75,7 +77,7 @@ simplify () {
 }
 
 # quickly check that the current phase isn't already solved
-quickcheck () (($1!=goal[0]||$2!=goal[1]||$3!=goal[2]))
+quickcheck () (($1^goal0|$2^goal1|$3^goal2))
 
 domoves () for m do add $REPLY ${moves[$m]}; done
 
@@ -86,35 +88,40 @@ solve () {
     local depth state=($*) h allowed t stack=()
     local solved=($SOLVED) solution=()
 
-    echo phase1
+    # each state is a tuple of (cp,co,ep,eo,ud1,ud2,ep_)
+    # ep_ is ep for only the u and d layers
+
+    printf '\e[32mphase 1\e[m\n'
     t[0]=${EPOCHREALTIME/.}
-    phase1state=(${state[1]} ${state[3]} ${state[4]})
-    goal=(${solved[1]} ${solved[3]} ${solved[4]})
-    h=(co eo ud1)
+    phase1state=("${state[1]}" "${state[3]}" "${state[4]}")
+    goal0=${solved[1]} goal1=${solved[3]} goal2=${solved[4]} # co eo ud1
+    h0=co h1=eo h2=ud1
     allowed=({F,B,L,R}{,\'} {F,B,R,L}2 {U,D}{,2,\'})
-    if quickcheck ${phase1state[@]}; then
-        searchdepth ${phase1state[@]}
-        solution=(${stack[@]}) stack=()
+    if quickcheck "${phase1state[@]}"; then
+        searchdepth "${phase1state[@]}"
+        solution=("${stack[@]}") stack=()
+
+        # apply the solution we just found to know what the full state is
         REPLY=$*
-        domoves ${solution[@]}
+        domoves "${solution[@]}"
         state=($REPLY)
     fi
     t[1]=${EPOCHREALTIME/.}
 
-    echo phase2
+    printf '\e[32mphase 2\e[m\n'
     t[2]=${EPOCHREALTIME/.}
-    phase2state=(${state[0]} ${state[6]} ${state[5]}) # restricted ep
-    goal=(${solved[0]} ${solved[6]} ${solved[5]})
-    h=(cp ep ud2)
+    phase2state=("${state[0]}" "${state[6]}" "${state[5]}") # restricted ep
+    goal0=${solved[0]} goal1=${solved[6]} goal2=${solved[5]} # cp ep_ ud2
+    h0=cp h1=ep h2=ud2
     allowed=({U,D}{,2,\'} {F,B,L,R}2)
-    if quickcheck ${phase2state[@]}; then
-        searchdepth ${phase2state[@]}
-        solution+=(${stack[@]})
+    if quickcheck "${phase2state[@]}"; then
+        searchdepth "${phase2state[@]}"
+        solution+=("${stack[@]}")
     fi
     t[3]=${EPOCHREALTIME/.}
 
     simplify "${solution[@]}"
-    solution=($REPLY) stack=()
+    solution=($REPLY)
 
     showtime "${t[0]}" "${t[1]}" phase1
     showtime "${t[2]}" "${t[3]}" phase2
