@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 source ./defs.bash
 source ./ui.bash
@@ -61,15 +61,32 @@ searchdepth () {
 }
 
 simplify () {
-    set "${@//\'/3}"
-    set "${@/%[^23]/&1}"
-    local IFS= join='(.*)(.)([123])\2([123])(.*)'
+    set -- "${@//\'/3}"
+    set -- "${@/%[^23]/&1}"
+    local join='(.*)(.)([123])\2([123])(.*)'
+    local swap='(.*)((D.)(U.)|(L.)(R.)|(B.)(F.))(.*)'
+    declare -n m=BASH_REMATCH
+    local IFS=
     REPLY=$*
-    while [[ $REPLY =~ $join ]]; do
-        REPLY=${BASH_REMATCH[1]}${BASH_REMATCH[2]}$((BASH_REMATCH[3]+BASH_REMATCH[4]))${BASH_REMATCH[5]}
-        REPLY=${REPLY//5/1}
-        REPLY=${REPLY//6/2}
-        REPLY=${REPLY//?4}
+    while :; do
+        if [[ $REPLY =~ $join ]]; then
+            REPLY=${m[1]}${m[2]}$((m[3]+m[4]))${m[5]}
+            REPLY=${REPLY//5/1}
+            REPLY=${REPLY//6/2}
+            REPLY=${REPLY//?4}
+        elif [[ $REPLY =~ $swap ]]; then
+            REPLY=${m[1]}
+            if [[ ${m[3]} ]]; then
+                REPLY+=${m[4]}${m[3]}
+            elif [[ ${m[5]} ]]; then
+                REPLY+=${m[6]}${m[5]}
+            else
+                REPLY+=${m[8]}${m[7]}
+            fi
+            REPLY+=${m[9]}
+        else
+            break
+        fi
     done
     REPLY=${REPLY//[123]/& }
     REPLY=${REPLY//1}
@@ -134,7 +151,13 @@ if (( $# )); then
     domoves $*
     solve $REPLY
 else
-    while read -rep 'scramble: ' scramble; do
+    set -o emacs
+    bind tab:
+    while IFS= read -rep 'scramble: ' scramble; do
+        [[ $scramble =~ ^' '*$ ]] && continue
+        history -s -- "$scramble"
+        regex="^ *([UDFBRL][2']? +)*[UDFBRL][2']? *$"
+        [[ $scramble =~ $regex ]] || { echo invalid scramble; continue; }
         REPLY=$SOLVED
         domoves $scramble
         solve $REPLY
