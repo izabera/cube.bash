@@ -51,6 +51,7 @@ cube () {
 
 declare -A moves
 
+
 cube ULB URB URF ULF   DLF DRF DRB DLB   UB UR UF UL   BL FL FR BR   DF DR DB DL; SOLVED=$REPLY
 cube UFL UBL UBR UFR   DLF DRF DRB DLB   UL UB UR UF   BL FL FR BR   DF DR DB DL; moves[U]=$REPLY
 cube ULB URB URF ULF   DLB DLF DRF DRB   UB UR UF UL   BL FL FR BR   DL DF DR DB; moves[D]=$REPLY
@@ -88,3 +89,19 @@ for m in U D F B R L; do
     add ${moves[$m]} ${moves[$m]};   moves[$m\2]=$REPLY
     add ${moves[$m]} ${moves[$m\2]}; moves[$m\']=$REPLY
 done
+
+# reid URF URB ULB ULF DRF DLF DLB DRB
+# mine ULB URB URF ULF DLF DRF DRB DLB
+
+# reid UF UR UB UL DF DR DB DL FR FL BR BL
+# mine UB UR UF UL BL FL FR BR DF DR DB DL
+# inv  UF UR UB UL DL DR DF DB BL FL FR BR
+
+cube UFR URB UBL ULF DRF DFL DLB DBR UF UR UB UL DL DR DF DB BL FL FR BR
+SOLVEDREID=$REPLY
+
+reid () {
+    local edges=(${@:1:12}) corners=(${@:13})
+    cube ${corners[@]} ${edges[@]}
+    add $REPLY $SOLVEDREID
+}

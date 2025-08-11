@@ -148,7 +148,12 @@ solve () {
 if (( $# )); then
     echo scramble: "$@"
     REPLY=$SOLVED
-    domoves $*
+    if [[ $1 = --reid ]]; then
+        shift
+        reid $*
+    else
+        domoves $*
+    fi
     solve $REPLY
 else
     set -o emacs
@@ -156,10 +161,16 @@ else
     while IFS= read -rep 'scramble: ' scramble; do
         [[ $scramble =~ ^' '*$ ]] && continue
         history -s -- "$scramble"
-        regex="^ *([UDFBRL][2']? +)*[UDFBRL][2']? *$"
-        [[ $scramble =~ $regex ]] || { echo invalid scramble; continue; }
-        REPLY=$SOLVED
-        domoves $scramble
+
+        scramble=($scramble)
+        if [[ ${scramble[0]} = --reid ]]; then
+            reid ${scramble[@]:1}
+        else
+            regex="^ *([UDFBRL][2']? +)*[UDFBRL][2']? *$"
+            [[ ${scramble[@]} =~ $regex ]] || { echo invalid scramble; continue; }
+            REPLY=$SOLVED
+            domoves ${scramble[@]}
+        fi
         solve $REPLY
     done
 fi
