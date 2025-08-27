@@ -26,13 +26,13 @@ declare -A badnext=(
 # h=(co eo ud1) or h=(cp ep ud2)
 idastar () {
     local lvl=$((lvl+1)) m next{0,1,2} sofar
-    verbose echo
+    #verbose echo
 
     for m in "${allowed[@]}"; do
-        verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
+        #verbose printf '%*slvl=%s m=%s\e[K\r' "$lvl" '' "$lvl" "$sofar$m"
         [[ $m != [${badnext[$1]}]* ]] || continue
-        verbose sofar+="$m "
-        verbose ((ida++))
+        #verbose sofar+="$m "
+        #verbose ((ida++))
         ((lvl+${h0}prune[$((next0=${h0}trans[$2$m]))]<depth)) &&
         ((lvl+${h1}prune[$((next1=${h1}trans[$3$m]))]<depth)) &&
         ((lvl+${h2}prune[$((next2=${h2}trans[$4$m]))]<depth)) || continue
@@ -41,7 +41,7 @@ idastar () {
         ((next0^goal0|next1^goal1|next2^goal2)) || return 0
         idastar "$m" "$next0" "$next1" "$next2" && return
     done
-    verbose printf '\e[A\e[J'
+    #verbose printf '\e[A\e[J'
     return 1
 }
 
@@ -57,7 +57,7 @@ searchdepth () {
         t1=${EPOCHREALTIME/.}
         showtime "$t0" "$t1"
     done
-    verbose printf '\e[32m%s\e[m states reached\n' "$ida"
+    #verbose printf '\e[32m%s\e[m states reached\n' "$ida"
 }
 
 simplify () {
